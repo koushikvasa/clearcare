@@ -597,85 +597,122 @@ def _fill_missing_with_web_search(plan_details: dict) -> dict:
     Stage 3: For any null fields in the extracted plan details,
     search the web to find the real values.
     
-    Why this matters: Insurance cards rarely show deductibles or
-    out-of-pocket maximums. But these numbers are public — insurers
-    publish their plan benefits online. We can find them.
-    
-    Example search: "Humana Gold Plus HMO H5619 deductible 2024"
+    Improvement: More targeted search queries + explicit field
+    mapping prompt so GPT-4o reliably finds the right numbers.
     """
     plan_name = plan_details.get("plan_name", "")
-    company = plan_details.get("insurance_company", "")
+    company   = plan_details.get("insurance_company", "")
+    zip_code  = plan_details.get("zip_code", "")
 
     if not plan_name:
-        return plan_details  # nothing to search for
+        return plan_details
 
-    # Fields we want to fill in if missing
-    missing_fields = []
-    if not plan_details.get("deductible"):
-        missing_fields.append("deductible")
-    if not plan_details.get("out_of_pocket_max"):
-        missing_fields.append("out-of-pocket maximum")
-    if not plan_details.get("copay_primary_care"):
-        missing_fields.append("copay primary care specialist")
+    # Build targeted searches — one for cost sharing, one for network
+    # Specific queries return much better results than generic ones
+    search_queries = []
 
-    if not missing_fields:
-        return plan_details  # everything already filled
+    if not plan_details.get("deductible") or not plan_details.get("out_of_pocket_max"):
+        search_queries.append(
+            f"{plan_name} {company} Medicare plan deductible "
+            f"out-of-pocket maximum copay 2025 benefits summary"
+        )
 
-    # Build a targeted search query for this specific plan
-    search_query = (
-        f"{plan_name} {company} Medicare plan "
-        f"{' '.join(missing_fields)} 2024 2025"
-    )
+    if not plan_details.get("plan_type") or plan_details.get("plan_type") == "unknown":
+        search_queries.append(
+            f"{plan_name} {company} Medicare Advantage HMO PPO plan type 2025"
+        )
+
+    if not search_queries:
+        return plan_details  # nothing missing
+
+    # Run all searches and combine results
+    combined_text = ""
+    for query in search_queries:
+        try:
+            results = tavily.search(query=query, max_results=3, search_depth="advanced")
+            if results and results.get("results"):
+                for r in results["results"]:
+                    combined_text += f"\nSOURCE: {r.get('url','')}\n{r.get('content','')}\n"
+        except Exception:
+            continue
+
+    if not combined_text:
+        return plan_details
+
+    # Very explicit prompt — tell GPT-4o exactly what to look for
+    # and exactly how to return it
+    fill_prompt = f"""
+You are extracting specific insurance plan benefit values from search results.
+
+Plan we are researching: "{plan_name}" by "{company}"
+
+SEARCH RESULTS:
+{combined_text[:4000]}
+
+YOUR TASK:
+Find and extract ONLY these specific values from the search results above.
+Look for tables, benefit summaries, or plan documents that list these numbers.
+
+Fields to extract:
+- deductible: The annual deductible amount in dollars (often $0 for Medicare Advantage)
+- out_of_pocket_max: The annual out-of-pocket maximum in dollars  
+- copay_primary_care: Dollar copay for a primary care visit
+- copay_specialist: Dollar copay for a specialist visit
+- coinsurance: The percentage the patient pays after deductible (e.g. 20)
+- plan_type: HMO, PPO, PFFS, SNP, or Original Medicare
+
+RULES:
+- Only return values you found explicitly in the text above
+- If a value says "$0" that is a real value — return 0, not null
+- If you truly cannot find a value, return null
+- Do not guess or use general Medicare knowledge
+- Return valid JSON only, no explanation
+
+Return this exact JSON structure:
+{{
+  "deductible": number or null,
+  "out_of_pocket_max": number or null,
+  "copay_primary_care": number or null,
+  "copay_specialist": number or null,
+  "coinsurance": number or null,
+  "plan_type": "string or null",
+  "source_confidence": 0.0 to 1.0
+}}
+"""
 
     try:
-        results = tavily.search(query=search_query, max_results=3)
-
-        if not results or not results.get("results"):
-            return plan_details
-
-        # Combine search result text
-        search_text = " ".join([
-            r.get("content", "") for r in results["results"]
-        ])
-
-        # Ask GPT-4o to extract the missing fields from search results
-        fill_prompt = f"""
-        Given this information about the insurance plan "{plan_name}":
-        
-        {search_text[:3000]}
-        
-        Extract ONLY these specific values if found:
-        {', '.join(missing_fields)}
-        
-        Return JSON with only the fields you found, plus a confidence score.
-        If you cannot find a specific value, use null.
-        Do not guess — only return values explicitly stated in the text.
-        """
-
         response = openai_client.chat.completions.create(
             model="gpt-4o",
             response_format={"type": "json_object"},
-            messages=[
-                {"role": "user", "content": fill_prompt}
-            ],
-            max_tokens=300
+            messages=[{"role": "user", "content": fill_prompt}],
+            max_tokens=400
         )
 
         filled = json.loads(response.choices[0].message.content)
 
-        # Merge filled values into plan_details
-        # Only update fields that are currently null
-        for key, value in filled.items():
-            if key != "confidence" and value and not plan_details.get(key):
-                plan_details[key] = value
+        # Merge into plan_details — only fill null fields
+        fields_to_merge = [
+            "deductible", "out_of_pocket_max", "copay_primary_care",
+            "copay_specialist", "coinsurance", "plan_type"
+        ]
+        filled_count = 0
+        for field in fields_to_merge:
+            value = filled.get(field)
+            # Fill if: we have a value AND current field is null
+            # Note: value=0 is valid (many MA plans have $0 deductible)
+            if value is not None and plan_details.get(field) is None:
+                plan_details[field] = value
+                filled_count += 1
 
-        # Update confidence — averaged between original and web fill
-        original_confidence = plan_details.get("confidence", 0.5)
-        web_confidence = filled.get("confidence", 0.5)
-        plan_details["confidence"] = round(
-            (original_confidence + web_confidence) / 2, 2
-        )
-        plan_details["web_search_used"] = True
+        # Update confidence based on how much we filled
+        original_conf = plan_details.get("confidence", 0.5)
+        source_conf   = filled.get("source_confidence", 0.5)
+        fill_bonus    = filled_count * 0.03  # small boost per field found
+        plan_details["confidence"] = min(0.95, round(
+            (original_conf + source_conf) / 2 + fill_bonus, 2
+        ))
+        plan_details["web_search_used"]    = True
+        plan_details["web_fields_filled"]  = filled_count
 
     except Exception as e:
         plan_details["web_search_error"] = str(e)
@@ -737,6 +774,16 @@ def extract_plan_details(
         # This runs regardless of input type
         plan_details = _fill_missing_with_web_search(plan_details)
 
+        # ── Apply sensible defaults for still-missing fields ──
+        # Primary care copay is often $0 for preventive or $10-20 for MA plans
+        # We default to $0 rather than crashing the cost calculator
+        if plan_details.get("copay_primary_care") is None:
+            plan_details["copay_primary_care"] = 0
+        if plan_details.get("coinsurance") is None:
+            plan_details["coinsurance"] = 20      # standard Medicare rate
+        if plan_details.get("deductible") is None:
+            plan_details["deductible"] = 0        # most MA plans are $0
+
         # ── Format as readable output for the agent ───
         output_lines = [
             "=== EXTRACTED PLAN DETAILS ===",
@@ -744,11 +791,19 @@ def extract_plan_details(
             f"Plan Type:          {plan_details.get('plan_type', 'Not found')}",
             f"Insurance Company:  {plan_details.get('insurance_company', 'Not found')}",
             f"Member ID:          {plan_details.get('member_id', 'Not found')}",
+            f"Zip Code:           {plan_details.get('zip_code', 'Not found')}",
+            "",
+            "=== COST SHARING DETAILS ===",
             f"Deductible:         ${plan_details.get('deductible', 'Not found')}",
             f"Out-of-Pocket Max:  ${plan_details.get('out_of_pocket_max', 'Not found')}",
-            f"Zip Code:           {plan_details.get('zip_code', 'Not found')}",
+            f"Copay Primary Care: ${plan_details.get('copay_primary_care', 'Not found')}",
+            f"Copay Specialist:   ${plan_details.get('copay_specialist', 'Not found')}",
+            f"Coinsurance:        {plan_details.get('coinsurance', 'Not found')}%",
+            "",
+            "=== EXTRACTION QUALITY ===",
             f"Confidence:         {round(plan_details.get('confidence', 0) * 100)}%",
             f"Web Search Used:    {plan_details.get('web_search_used', False)}",
+            f"Fields Filled:      {plan_details.get('web_fields_filled', 0)} via web search",
             "",
             "Use these details in estimate_cost() for accurate calculation.",
             "⚠️ Always verify plan details with your insurer."
