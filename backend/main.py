@@ -22,11 +22,11 @@ from routes.image import router as image_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # ── Startup ───────────────────────────────────────
-    print("\n🏥 ClearCare backend starting...")
+    print("\n ClearCare backend starting...")
     validate_config()                          # warn if any keys missing
-    print(f"🌍 Environment: {ENVIRONMENT}")
-    print(f"🔗 Allowed origin: {FRONTEND_URL}")
-    print("✅ Backend ready\n")
+    print(f"Environment: {ENVIRONMENT}")
+    print(f"Allowed origin: {FRONTEND_URL}")
+    print("Backend ready\n")
     yield
     # ── Shutdown ──────────────────────────────────────
     print("\n👋 ClearCare backend shutting down")
