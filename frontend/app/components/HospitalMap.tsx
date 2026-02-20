@@ -103,8 +103,8 @@ export default function HospitalMap({ hospitals }: HospitalMapProps) {
 
   // Add markers when hospitals change
   useEffect(() => {
-    if (!isReady || !mapInstance.current || !hospitals.length) return
-
+    if (!isReady || !mapInstance.current) return
+    if (!hospitals || hospitals.length === 0) return
     // Clear old markers
     markersRef.current.forEach(m => m.setMap(null))
     markersRef.current = []

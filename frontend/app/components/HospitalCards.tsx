@@ -24,7 +24,16 @@ function NetworkBadge({ status }: { status: string }) {
 }
 
 export default function HospitalCards({ hospitals }: HospitalCardsProps) {
-  if (!hospitals.length) return null
+    if (!hospitals || hospitals.length === 0) {
+        return (
+          <div className="card hospitals-empty">
+            <p className="hospitals-empty-text">
+              No providers found near this zip code. Try a nearby zip code or broaden your search.
+            </p>
+          </div>
+        )
+      }
+    
 
   const top        = hospitals[0]
   const rest       = hospitals.slice(1)

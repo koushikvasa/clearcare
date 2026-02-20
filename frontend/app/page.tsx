@@ -226,7 +226,7 @@ export default function Page() {
               />
             )}
 
-            {result && result.hospitals.length > 0 && (
+            {result &&  (
               <div className="fade-in-up">
                 <HospitalCards hospitals={result.hospitals} />
               </div>
@@ -250,7 +250,7 @@ export default function Page() {
               />
             )}
 
-            {result && result.hospitals.length > 0 && (
+            {result && (
               <div className="fade-in-up">
                 <HospitalMap hospitals={result.hospitals} />
               </div>
