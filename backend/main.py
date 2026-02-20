@@ -55,9 +55,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        FRONTEND_URL,                          # localhost:3000 in dev
-        "https://clearcare.health",            # production domain
-        "https://www.clearcare.health",
+        "http://localhost:3000",
+        "https://clearcare.vercel.app",
+        "https://*.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],                       # allow all HTTP methods
