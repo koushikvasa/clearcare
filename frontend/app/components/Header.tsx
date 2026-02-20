@@ -18,13 +18,13 @@ export default function Header({ greeting, isReturning, onClearData }: HeaderPro
 
         {/* Left — logo and tagline */}
         <div className="header-brand">
-          <div className="header-logo">
+        <div className="header-logo">
             <div className="logo-icon">C</div>
             <span className="logo-text">ClearCare</span>
-          </div>
-          <p className="header-tagline">
+        </div>
+        <p className="header-tagline">
             Know what you'll pay. Before you go.
-          </p>
+        </p>
         </div>
 
         {/* Center — returning user greeting */}
