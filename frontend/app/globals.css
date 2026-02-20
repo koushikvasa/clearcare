@@ -940,3 +940,103 @@ button { font-family: var(--font-body); }
 @media (min-width: 640px) {
   .upload-tab { padding: 20px; }
 }
+
+/* ── Footer ──────────────────────────────────────── */
+.footer {
+  background:    var(--bg-white);
+  border-top:    1px solid var(--border);
+  margin-top:    auto;
+}
+
+.footer-inner {
+  max-width:   1280px;
+  margin:      0 auto;
+  padding:     24px 16px 20px;
+  display:     flex;
+  flex-direction: column;
+  gap:         20px;
+}
+
+.footer-brand {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+}
+
+.footer-logo {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  margin-bottom: 2px;
+}
+
+.footer-tagline {
+  font-size:  13px;
+  color:      var(--text-muted);
+  line-height: 1.4;
+}
+
+.footer-built {
+  font-size:  12px;
+  color:      var(--text-muted);
+  line-height: 1.4;
+}
+
+.footer-links {
+  display:  flex;
+  gap:      20px;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  font-size:       13px;
+  font-weight:     600;
+  color:           var(--teal);
+  text-decoration: none;
+  transition:      color 0.2s;
+}
+
+.footer-link:hover { color: var(--teal-dark); }
+
+.footer-disclaimer {
+  max-width:     1280px;
+  margin:        0 auto;
+  padding:       14px 16px;
+  border-top:    1px solid var(--border);
+  width:         100%;
+  display:       flex;
+  flex-direction: column;
+  gap:           6px;
+}
+
+.footer-disclaimer p {
+  font-size:  11px;
+  color:      var(--text-muted);
+  line-height: 1.6;
+}
+
+.footer-copy {
+  font-size: 11px;
+  color:     var(--text-muted);
+}
+
+@media (min-width: 640px) {
+  .footer-inner {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items:    flex-start;
+    padding:        28px 20px 24px;
+  }
+
+  .footer-disclaimer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items:    center;
+    padding:        14px 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer-inner       { padding: 32px 32px 28px; }
+  .footer-disclaimer  { padding: 14px 32px; }
+}
