@@ -305,10 +305,12 @@ def node_find_hospitals(state: AgentState) -> dict:
                 continue
 
             hospitals.append({
-                "name":    name,
-                "address": f"{addr.get('address_1','')}, {addr.get('city','')}, {addr.get('state','')} {addr.get('postal_code','')}",
-                "phone":   addr.get("telephone_number", "N/A"),
-                "npi":     p.get("number", ""),
+                "hospital":       name,
+                "address":        f"{addr.get('address_1','')}, {addr.get('city','')}, {addr.get('state','')} {addr.get('postal_code','')}",
+                "phone":          addr.get("telephone_number", "N/A"),
+                "npi":            p.get("number", ""),
+                "network_status": "unknown",   # gets updated later by cost node
+                "estimated_cost": 0,           # gets updated later by cost node
             })
 
     except Exception as e:

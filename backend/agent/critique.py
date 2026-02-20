@@ -256,6 +256,12 @@ spoken_summary, next_step
 
 
 def run_critique_loop(answer: dict, care_needed: str, has_insurance: bool) -> dict:
+    # Safety — if answer is missing key fields skip critique
+    if not answer.get("spoken_summary") and not answer.get("headline"):
+        answer["score_history"] = []
+        answer["final_score"]   = 0
+        answer["iterations"]    = 0
+        return answer
     """
     Run the full self-critique and improvement loop.
 

@@ -85,7 +85,11 @@ export default function ResultsPanel({
           <div>
             <p className="cost-label">Estimated Cost</p>
             <div className="cost-amount">
-              ${result.in_network_cost?.toLocaleString() ?? "—"}
+            {result.in_network_cost
+                ? "$" + result.in_network_cost.toLocaleString()
+                : result.alternative_cost
+                ? "$" + result.alternative_cost.toLocaleString()
+                : "See below"}
             </div>
             <p className="cost-explanation">{result.headline}</p>
           </div>
