@@ -652,3 +652,291 @@ button { font-family: var(--font-body); }
   .analysis-body   { padding: 14px 20px; }
   .next-step-box   { margin: 0 20px 20px 20px; }
 }
+
+/* ── Voice Input ─────────────────────────────────── */
+.voice-tab {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        20px 16px;
+}
+
+.orb-wrap {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            14px;
+  padding:        10px 0;
+}
+
+.voice-orb {
+  width:           88px;
+  height:          88px;
+  border-radius:   50%;
+  background:      var(--teal);
+  border:          none;
+  cursor:          pointer;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  transition:      transform 0.2s, background 0.2s, box-shadow 0.2s;
+  touch-action:    manipulation;
+  position:        relative;
+}
+
+.voice-orb:hover:not(:disabled) {
+  transform:  scale(1.05);
+  box-shadow: 0 0 0 12px var(--teal-light);
+}
+
+.voice-orb--recording {
+  background: #E53E3E;
+  animation:  orb-pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 0 12px rgba(229, 62, 62, 0.15);
+}
+
+.voice-orb--processing {
+  background: var(--text-muted);
+  cursor:     not-allowed;
+}
+
+.voice-orb:disabled { cursor: not-allowed; }
+
+@keyframes orb-pulse {
+  0%, 100% { box-shadow: 0 0 0 8px rgba(229,62,62,0.15); }
+  50%       { box-shadow: 0 0 0 18px rgba(229,62,62,0.05); }
+}
+
+.orb-label {
+  font-size:  13px;
+  color:      var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Stop square */
+.orb-stop {
+  width:         18px;
+  height:        18px;
+  background:    white;
+  border-radius: 3px;
+  display:       block;
+}
+
+/* Spinner inside orb */
+.orb-spinner {
+  width:         24px;
+  height:        24px;
+  border:        3px solid rgba(255,255,255,0.3);
+  border-top:    3px solid white;
+  border-radius: 50%;
+  animation:     spin 0.8s linear infinite;
+  display:       block;
+}
+
+/* Mic icon built from CSS */
+.orb-mic {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            0;
+}
+
+.mic-body {
+  width:         16px;
+  height:        22px;
+  background:    white;
+  border-radius: 8px;
+  display:       block;
+}
+
+.mic-stand {
+  width:         20px;
+  height:        10px;
+  border:        2.5px solid white;
+  border-top:    none;
+  border-radius: 0 0 10px 10px;
+  display:       block;
+  margin-top:    1px;
+}
+
+.mic-base {
+  width:      2.5px;
+  height:     6px;
+  background: white;
+  display:    block;
+  margin-top: 1px;
+}
+
+/* Transcription */
+.transcription-box {
+  background:    var(--bg-input);
+  border-radius: var(--radius-md);
+  padding:       14px;
+}
+
+.transcription-header {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   8px;
+}
+
+.transcription-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+
+.transcription-clear {
+  background:  transparent;
+  border:      none;
+  font-size:   12px;
+  color:       var(--text-muted);
+  cursor:      pointer;
+  padding:     0;
+  font-weight: 500;
+}
+
+.transcription-clear:hover { color: var(--red); }
+
+.transcription-text { font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+
+@media (min-width: 640px) {
+  .voice-tab { padding: 20px; }
+}
+
+/* ── Insurance Upload ────────────────────────────── */
+.upload-tab {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        20px 16px;
+}
+
+.drop-zone {
+  border:          2px dashed var(--border);
+  border-radius:   var(--radius-md);
+  padding:         28px 20px;
+  text-align:      center;
+  cursor:          pointer;
+  transition:      border-color 0.2s, background 0.2s;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  gap:             8px;
+}
+
+.drop-zone:hover,
+.drop-zone--active {
+  border-color: var(--teal);
+  background:   var(--teal-light);
+}
+
+.drop-zone-uploading {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            12px;
+}
+
+.upload-file-input { display: none; }
+
+.drop-zone-icon {
+  width:           48px;
+  height:          48px;
+  background:      var(--bg-input);
+  border-radius:   50%;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  margin-bottom:   4px;
+}
+
+/* Upload arrow icon in CSS */
+.upload-arrow {
+  display:       block;
+  width:         16px;
+  height:        16px;
+  border-left:   2.5px solid var(--teal);
+  border-top:    2.5px solid var(--teal);
+  transform:     rotate(45deg) translate(3px, 3px);
+}
+
+.drop-zone-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.drop-zone-text  { font-size: 13px; color: var(--text-secondary); }
+.drop-zone-hint  { font-size: 11px; color: var(--text-muted); }
+
+/* Uploaded file row */
+.uploaded-file {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  padding:         12px 14px;
+  background:      var(--bg-input);
+  border-radius:   var(--radius-md);
+  gap:             12px;
+}
+
+.uploaded-file-info {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  flex:        1;
+  overflow:    hidden;
+}
+
+.uploaded-file-icon {
+  background:    var(--teal-light);
+  color:         var(--teal);
+  font-size:     10px;
+  font-weight:   700;
+  padding:       4px 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink:   0;
+}
+
+.uploaded-file-name {
+  font-size:     13px;
+  font-weight:   600;
+  color:         var(--text-primary);
+  white-space:   nowrap;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+}
+
+.uploaded-file-size  { font-size: 11px; color: var(--text-muted); }
+
+.uploaded-file-clear {
+  background:  transparent;
+  border:      none;
+  font-size:   12px;
+  color:       var(--red);
+  cursor:      pointer;
+  font-weight: 600;
+  flex-shrink: 0;
+  padding:     4px 0;
+}
+
+/* Extracted plan box */
+.extracted-box {
+  background:    var(--teal-light);
+  border-radius: var(--radius-md);
+  border-left:   3px solid var(--teal);
+  padding:       12px 14px;
+}
+
+.extracted-label {
+  font-size:      11px;
+  font-weight:    600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color:          var(--teal-dark);
+  margin-bottom:  6px;
+}
+
+.extracted-text {
+  font-size:  13px;
+  color:      var(--teal-dark);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+@media (min-width: 640px) {
+  .upload-tab { padding: 20px; }
+}
