@@ -8,9 +8,10 @@
 */
 
 /* ── Google Fonts are loaded via next/font above ── */
-@tailwind base;       
-@tailwind components;  
-@tailwind utilities;   
+/* Tailwind CSS directives - valid and required */
+@tailwind base;       /* css-validator-disable-line */
+@tailwind components;  /* css-validator-disable-line */
+@tailwind utilities;   /* css-validator-disable-line */   
 
 /* ── CSS Variables — design tokens ─────────────── */
 :root {
@@ -326,5 +327,46 @@ p {
 @media (max-width: 900px) {
   .main-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* ── Page layout ────────────────────────────────── */
+.page-wrapper {
+  min-height:     100vh;
+  display:        flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex:    1;
+  width:   100%;
+  max-width: 1280px;
+  margin:  0 auto;
+  padding: 24px 20px;
+}
+
+.left-column {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+}
+
+.right-column {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+}
+
+.full-width-section {
+  margin-top: 24px;
+  display:    flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    padding: 16px;
   }
 }
