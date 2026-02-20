@@ -26,7 +26,7 @@ from config import SUPABASE_URL, SUPABASE_KEY
 # Initialize Supabase client once at module level
 # create_client takes the project URL and the anon/service key
 # We use the service role key so we can read and write freely
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 # Name of the table we created in Supabase
 TABLE = "sessions"
@@ -39,6 +39,9 @@ def save_session(
     care_needed:     str,
     zip_code:        str,
 ) -> bool:
+
+    if not supabase:
+        return None
     """
     Save or update a user session in Supabase.
 
@@ -136,6 +139,8 @@ def load_session(session_id: str) -> Optional[dict]:
 
 
 def get_returning_user_context(session_id: str) -> dict:
+    if not supabase:
+        return {"is_returning": False, "greeting": ""}
     """
     Build a context dict for a returning user.
 
@@ -185,6 +190,8 @@ def get_returning_user_context(session_id: str) -> dict:
 
 
 def clear_session(session_id: str) -> bool:
+    if not supabase:
+        return None
     """
     Delete a session from Supabase.
 
