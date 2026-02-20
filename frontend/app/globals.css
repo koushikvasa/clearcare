@@ -606,7 +606,10 @@ button { font-family: var(--font-body); }
   background:    white;
   border-radius: 2px;
 }
-
+.play-btn--loading {
+  background: var(--text-muted);
+  cursor:     not-allowed;
+} 
 .analysis-body {
   padding: 14px 16px;
 }

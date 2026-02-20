@@ -51,11 +51,11 @@ export default function Footer() {
   
         {/* Disclaimer */}
         <div className="footer-disclaimer">
-          <b>
+          <p>
             ClearCare provides cost estimates only. Not a substitute for
             professional medical or financial advice. Always verify costs
             with your provider and insurer before scheduling care.
-          </b>
+          </p>
           <p className="footer-copy">
             © 2026 ClearCare — Koushik Vasa
           </p>
