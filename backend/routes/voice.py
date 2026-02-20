@@ -47,15 +47,21 @@ async def transcribe_audio(audio: UploadFile = File(...)):
 
     # Validate file type
     # Whisper supports: mp3, mp4, mpeg, mpga, m4a, wav, webm
-    allowed_types = {
-        "audio/webm", "audio/mp4", "audio/wav",
-        "audio/mpeg", "audio/m4a", "audio/x-m4a"
-    }
+    # Check loosely — browser often sends "audio/webm;codecs=opus"
+# which won't match an exact set check
+    content_type = audio.content_type or "audio/webm"
+    is_allowed = any(
+        content_type.startswith(t) for t in [
+            "audio/webm", "audio/mp4", "audio/wav",
+            "audio/mpeg", "audio/m4a", "audio/x-m4a",
+            "audio/ogg", "audio/"
+        ]
+    )
 
-    if audio.content_type and audio.content_type not in allowed_types:
+    if not is_allowed:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported audio type: {audio.content_type}"
+            detail=f"Unsupported audio type: {content_type}"
         )
 
     # Save to temp file
@@ -127,3 +133,74 @@ async def transcribe_audio(audio: UploadFile = File(...)):
             os.unlink(tmp_path)
         except Exception:
             pass
+
+from pydantic import BaseModel  # type: ignore[reportMissingImports]
+
+class ClassifyRequest(BaseModel):
+    text: str
+
+@router.post("/classify")
+async def classify_voice(request: ClassifyRequest):
+    """
+    Classify transcribed voice input into structured fields.
+    Uses GPT-4o to extract insurance plan, care needed, and zip code
+    from a single natural language sentence.
+    """
+    classify_prompt = """
+You are extracting structured fields from a voice input for a Medicare cost estimator.
+
+The user spoke one sentence describing what they need. Extract these fields:
+- insurance_input: the insurance plan name if mentioned (e.g. "Humana Gold Plus HMO")
+- care_needed: the medical procedure or care they need (e.g. "knee MRI", "colonoscopy")
+- zip_code: 5-digit zip code if mentioned
+
+RULES:
+- Only extract what was explicitly said
+- If a field was not mentioned return null
+- care_needed is the most important field — always try to extract it
+- Return valid JSON only
+
+EXAMPLES:
+
+Input: "I need a knee MRI with my Humana Gold Plus plan in zip 11201"
+Output: {"insurance_input": "Humana Gold Plus", "care_needed": "knee MRI", "zip_code": "11201"}
+
+Input: "colonoscopy near Brooklyn"
+Output: {"insurance_input": null, "care_needed": "colonoscopy", "zip_code": null}
+
+Input: "I have Aetna Medicare Advantage"
+Output: {"insurance_input": "Aetna Medicare Advantage", "care_needed": null, "zip_code": null}
+
+Input: "annual physical zip code 10001"
+Output: {"insurance_input": null, "care_needed": "annual physical", "zip_code": "10001"}
+"""
+
+    try:
+        from openai import OpenAI  # type: ignore[reportMissingImports]
+        import json
+        from config import OPENAI_API_KEY
+
+        client   = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": classify_prompt},
+                {"role": "user",   "content": request.text}
+            ],
+            max_tokens=150
+        )
+
+        result = json.loads(response.choices[0].message.content)
+        return {
+            "insurance_input": result.get("insurance_input"),
+            "care_needed":     result.get("care_needed"),
+            "zip_code":        result.get("zip_code"),
+            "original_text":   request.text,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Classification failed: {str(e)}"
+        )

@@ -163,12 +163,32 @@ export default function Page() {
     }
   }, [careNeeded, zipCode, insuranceInput, medicalHistory, sessionId])
 
-  const handleVoiceResult = useCallback((text: string) => {
-    const planKeywords = ["humana", "aetna", "united", "cigna", "medicare", "plan", "hmo", "ppo"]
-    const hasPlan = planKeywords.some(k => text.toLowerCase().includes(k))
-    if (hasPlan) setInsuranceInput(text)
-    else         setCareNeeded(text)
-  }, [])
+  const handleVoiceResult = useCallback(async (text: string) => {
+    if (!text.trim()) return
+  
+    // Use GPT-4o to classify what the user said
+    // into insurance input, care needed, or both
+    try {
+      const response = await fetch(`${API_URL}/api/voice/classify`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ text }),
+      })
+  
+      if (response.ok) {
+        const data = await response.json()
+        if (data.insurance_input) setInsuranceInput(data.insurance_input)
+        if (data.care_needed)     setCareNeeded(data.care_needed)
+        if (data.zip_code)        setZipCode(data.zip_code)
+        return
+      }
+    } catch {
+      // Fall back to putting everything in care_needed
+    }
+  
+    // Fallback if classify endpoint fails
+    setCareNeeded(text)
+  }, [API_URL])
 
   const handleUploadResult = useCallback((extractedText: string) => {
     setInsuranceInput(extractedText)
