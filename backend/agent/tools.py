@@ -19,7 +19,7 @@ from agent.prompts import INSURANCE_EXTRACTION_PROMPT
 
 # Initialize Tavily client once at module level
 # so we don't recreate it on every tool call
-tavily = TavilyClient(api_key=TAVILY_API_KEY)
+tavily = TavilyClient(api_key=TAVILY_API_KEY) if TAVILY_API_KEY else None
 
 
 # ── TOOL 1: Web Search ────────────────────────────────
