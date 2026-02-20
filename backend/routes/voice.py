@@ -15,6 +15,10 @@ from openai import OpenAI  # type: ignore[reportMissingImports]
 
 from config import OPENAI_API_KEY
 from agent.prompts import VOICE_CLEANUP_PROMPT
+from config import ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID
+from fastapi.responses import StreamingResponse  # type: ignore[reportMissingImports]
+import httpx  # type: ignore[reportMissingImports]
+
 
 router = APIRouter()
 
@@ -204,3 +208,72 @@ Output: {"insurance_input": null, "care_needed": "annual physical", "zip_code": 
             status_code=500,
             detail=f"Classification failed: {str(e)}"
         )
+
+
+class SpeakRequest(BaseModel):
+    text: str
+ 
+@router.post("/speak")
+async def speak(request: SpeakRequest):
+    """
+    Convert text to speech using ElevenLabs.
+    Returns audio/mpeg stream.
+    """
+    if not ELEVENLABS_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="ElevenLabs API key not configured"
+        )
+
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    # Truncate to 500 chars — keep it concise for playback
+    if len(text) > 500:
+        text = text[:497] + "..."
+
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
+
+    headers = {
+        "xi-api-key":   ELEVENLABS_API_KEY,
+        "Content-Type": "application/json",
+        "Accept":       "audio/mpeg",
+    }
+
+    payload = {
+        "text": text,
+        "model_id": "eleven_turbo_v2",
+        "voice_settings": {
+            "stability":        0.5,
+            "similarity_boost": 0.75,
+            "style":            0.0,
+            "use_speaker_boost": True,
+        }
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, headers=headers, json=payload)
+
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"ElevenLabs error: {response.text}"
+                )
+
+            audio_bytes = response.content
+
+            return StreamingResponse(
+                iter([audio_bytes]),
+                media_type="audio/mpeg",
+                headers={
+                    "Content-Length":      str(len(audio_bytes)),
+                    "Content-Disposition": "inline",
+                }
+            )
+
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="ElevenLabs timed out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
