@@ -272,7 +272,11 @@ export default function Page() {
 
             {result && (
               <div className="fade-in-up">
-                <HospitalMap hospitals={result.hospitals} />
+                <HospitalMap 
+  key={result ? "loaded" : "empty"}
+  hospitals={result.hospitals || []} 
+  zipCode={zipCode} 
+/>
               </div>
             )}
           </div>
@@ -280,7 +284,7 @@ export default function Page() {
         </div>
       </main>
 
-      <Footer />
+      <Footer/>
 
     </div>
   )

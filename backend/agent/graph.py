@@ -117,7 +117,6 @@ def parse_field(text: str, label: str) -> str:
 
 
 def parse_hospitals(text: str) -> list:
-    """Parse find_hospitals tool output into a list of dicts."""
     hospitals = []
     blocks = text.split("---")
     for block in blocks:
@@ -126,14 +125,14 @@ def parse_hospitals(text: str) -> list:
         hospital = {}
         for line in block.strip().split("\n"):
             if line.startswith("Name:"):
-                hospital["name"] = line.replace("Name:", "").strip()
+                hospital["hospital"] = line.replace("Name:", "").strip()  # was "name"
             elif line.startswith("Address:"):
                 hospital["address"] = line.replace("Address:", "").strip()
             elif line.startswith("Phone:"):
                 hospital["phone"] = line.replace("Phone:", "").strip()
             elif line.startswith("NPI:"):
                 hospital["npi"] = line.replace("NPI:", "").strip()
-        if hospital.get("name"):
+        if hospital.get("hospital"):  # was "name"
             hospitals.append(hospital)
     return hospitals
 
@@ -320,6 +319,7 @@ def node_find_hospitals(state: AgentState) -> dict:
 
 
 def node_check_network(state: AgentState) -> dict:
+
     """
     Node 5: Check network status for each hospital.
     In vs out of network is the single biggest factor
@@ -335,7 +335,7 @@ def node_check_network(state: AgentState) -> dict:
     network_results = []
 
     for hospital in hospitals[:4]:
-        name = hospital.get("name", "")
+        name = hospital.get("hospital", "")
         if not name:
             continue
 
@@ -357,7 +357,7 @@ def node_check_network(state: AgentState) -> dict:
                 status = "unknown"
 
         network_results.append({
-            "name":    name,
+            "hospital":    name,
             "address": hospital.get("address", ""),
             "phone":   hospital.get("phone", ""),
             "status":  status,
@@ -392,7 +392,7 @@ def node_estimate_cost(state: AgentState) -> dict:
         cost = parse_dollar(result, "Your estimated cost:")
 
         cost_results.append({
-            "hospital":       hospital["name"],
+            "hospital":       hospital["hospital"],
             "address":        hospital.get("address", ""),
             "phone":          hospital.get("phone", ""),
             "network_status": hospital["status"],

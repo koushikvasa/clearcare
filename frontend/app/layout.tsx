@@ -25,12 +25,17 @@ const syne = Syne({
   display: "swap",
 })
 
+
+
 // Metadata appears in browser tab and search results
 // og: fields are for social sharing previews
 export const metadata: Metadata = {
   title: "ClearCare — Know What You'll Pay",
   description:
     "AI Medicare cost navigator. Find in-network hospitals, estimate your out-of-pocket costs, and discover cheaper alternatives before you schedule care.",
+  icons: {
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2300A693'/><text x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='system-ui' font-weight='700' font-size='18' fill='white'>C</text></svg>",
+    },
   keywords: "Medicare cost estimator, insurance, hospital finder, out of pocket cost",
   authors: [{ name: "Koushik Vasa" }],
   openGraph: {
