@@ -1,89 +1,76 @@
 /* globals.css
-   Global styles for ClearCare.
-   Based on your design: white background, teal accent,
-   clean medical aesthetic.
+   Mobile-first responsive design system for ClearCare.
+   Base styles = mobile. Scale up with min-width breakpoints.
 
-   We use CSS variables so colors are easy to change
-   in one place and consistent everywhere.
+   Breakpoints:
+   640px  = tablet
+   1024px = desktop (two column layout kicks in)
+   1280px = wide desktop (max content width)
 */
 
-/* ── Google Fonts are loaded via next/font above ── */
-/* Tailwind CSS directives - valid and required */
-@tailwind base;       /* css-validator-disable-line */
-@tailwind components;  /* css-validator-disable-line */
-@tailwind utilities;   /* css-validator-disable-line */   
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* ── CSS Variables — design tokens ─────────────── */
+/* ── Design tokens ──────────────────────────────── */
 :root {
-  /* Brand colors — from your design */
   --teal:          #00A693;
   --teal-dark:     #007C6E;
   --teal-light:    #E6F7F5;
   --teal-mid:      #00BFA8;
 
-  /* Text colors */
   --text-primary:  #0D1B2A;
   --text-secondary:#5A6A7A;
   --text-muted:    #9AAAB8;
 
-  /* Background colors */
   --bg-page:       #F7F9FC;
   --bg-white:      #FFFFFF;
-  --bg-panel:      #FFFFFF;
   --bg-input:      #F0F4F8;
 
-  /* Status colors */
   --green:         #00A693;
   --green-light:   #E6F7F5;
   --red:           #E53E3E;
   --red-light:     #FFF5F5;
-  --orange:        #F6AD55;
 
-  /* Border */
   --border:        #E2E8F0;
-  --border-focus:  #00A693;
 
-  /* Shadows */
   --shadow-sm:     0 1px 3px rgba(0,0,0,0.08);
   --shadow-md:     0 4px 16px rgba(0,0,0,0.10);
   --shadow-lg:     0 8px 32px rgba(0,0,0,0.12);
 
-  /* Typography */
   --font-body:     var(--font-inter), system-ui, sans-serif;
   --font-display:  var(--font-syne), system-ui, sans-serif;
 
-  /* Spacing scale */
   --radius-sm:     6px;
   --radius-md:     12px;
   --radius-lg:     16px;
   --radius-xl:     24px;
 }
 
-/* ── Base reset ─────────────────────────────────── */
-*,
-*::before,
-*::after {
+/* ── Reset ──────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  margin:     0;
+  padding:    0;
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior:        smooth;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  font-family:      var(--font-body);
-  background-color: var(--bg-page);
-  color:            var(--text-primary);
-  line-height:      1.6;
-  font-size:        15px;
+  font-family:             var(--font-body);
+  background-color:        var(--bg-page);
+  color:                   var(--text-primary);
+  line-height:             1.6;
+  font-size:               15px;
   -webkit-font-smoothing:  antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x:              hidden;
 }
 
-/* ── Typography ─────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   line-height: 1.2;
@@ -95,176 +82,138 @@ p {
   line-height: 1.7;
 }
 
-/* ── Scrollbar — subtle, matches brand ─────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+img, video {
+  max-width: 100%;
+  height:    auto;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-input);
+button {
+  font-family: var(--font-body);
 }
 
-::-webkit-scrollbar-thumb {
-  background:    var(--teal-light);
-  border-radius: 99px;
-}
+/* ── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-input); }
+::-webkit-scrollbar-thumb { background: var(--teal-light); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--teal); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--teal);
-}
-
-/* ── Focus styles — accessibility ───────────────── */
+/* ── Focus ───────────────────────────────────────── */
 :focus-visible {
   outline:        2px solid var(--teal);
   outline-offset: 2px;
   border-radius:  var(--radius-sm);
 }
 
-/* ── Utility classes used across components ─────── */
+/* ── Reusable utility classes ────────────────────── */
 
-/* Card — white box with shadow */
 .card {
   background:    var(--bg-white);
   border-radius: var(--radius-lg);
   box-shadow:    var(--shadow-sm);
   border:        1px solid var(--border);
+  overflow:      hidden;
 }
 
-/* Network status badges */
 .badge-in-network {
   background:    var(--green-light);
   color:         var(--green);
-  font-size:     12px;
+  font-size:     11px;
   font-weight:   600;
   padding:       3px 10px;
   border-radius: 99px;
   display:       inline-block;
+  white-space:   nowrap;
 }
 
 .badge-out-network {
   background:    var(--red-light);
   color:         var(--red);
-  font-size:     12px;
+  font-size:     11px;
   font-weight:   600;
   padding:       3px 10px;
   border-radius: 99px;
   display:       inline-block;
+  white-space:   nowrap;
 }
 
 .badge-unknown {
   background:    #EDF2F7;
   color:         #718096;
-  font-size:     12px;
+  font-size:     11px;
   font-weight:   600;
   padding:       3px 10px;
   border-radius: 99px;
   display:       inline-block;
+  white-space:   nowrap;
 }
 
-/* Primary button */
 .btn-primary {
-  background:    var(--teal);
-  color:         white;
-  font-family:   var(--font-body);
-  font-weight:   600;
-  font-size:     15px;
-  padding:       12px 24px;
-  border-radius: var(--radius-md);
-  border:        none;
-  cursor:        pointer;
-  width:         100%;
-  transition:    background 0.2s, transform 0.1s;
+  background:      var(--teal);
+  color:           white;
+  font-weight:     600;
+  font-size:       15px;
+  padding:         14px 24px;
+  border-radius:   var(--radius-md);
+  border:          none;
+  cursor:          pointer;
+  width:           100%;
+  transition:      background 0.2s, transform 0.1s;
+  touch-action:    manipulation;
+  /* Minimum touch target 44px for mobile */
+  min-height:      48px;
 }
 
-.btn-primary:hover {
-  background: var(--teal-dark);
-}
-
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
+.btn-primary:hover  { background: var(--teal-dark); }
+.btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled {
   background: var(--text-muted);
   cursor:     not-allowed;
 }
 
-/* Secondary button */
 .btn-secondary {
-  background:    transparent;
-  color:         var(--teal);
-  font-family:   var(--font-body);
-  font-weight:   600;
-  font-size:     14px;
-  padding:       10px 20px;
+  background:   transparent;
+  color:        var(--teal);
+  font-weight:  600;
+  font-size:    14px;
+  padding:      10px 20px;
   border-radius: var(--radius-md);
-  border:        2px solid var(--teal);
-  cursor:        pointer;
-  transition:    all 0.2s;
+  border:       2px solid var(--teal);
+  cursor:       pointer;
+  transition:   all 0.2s;
+  min-height:   44px;
+  touch-action: manipulation;
 }
 
-.btn-secondary:hover {
-  background: var(--teal-light);
-}
+.btn-secondary:hover { background: var(--teal-light); }
 
-/* Input field */
 .input-field {
   width:         100%;
-  padding:       11px 14px;
+  padding:       13px 16px;
   border:        1.5px solid var(--border);
   border-radius: var(--radius-md);
-  font-family:   var(--font-body);
-  font-size:     14px;
+  font-size:     16px;
+  /* 16px prevents iOS zoom on focus */
   color:         var(--text-primary);
   background:    var(--bg-white);
   transition:    border-color 0.2s;
   outline:       none;
+  /* Minimum touch target */
+  min-height:    48px;
 }
 
-.input-field:focus {
-  border-color: var(--teal);
-}
+.input-field:focus       { border-color: var(--teal); }
+.input-field::placeholder { color: var(--text-muted); }
 
-.input-field::placeholder {
-  color: var(--text-muted);
-}
-
-/* Label */
 .input-label {
-  font-size:     12px;
-  font-weight:   600;
-  color:         var(--text-secondary);
+  font-size:      12px;
+  font-weight:    600;
+  color:          var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 6px;
-  display:       block;
+  margin-bottom:  6px;
+  display:        block;
 }
 
-/* Tab button */
-.tab-btn {
-  padding:       8px 16px;
-  border-radius: var(--radius-sm);
-  font-size:     13px;
-  font-weight:   600;
-  cursor:        pointer;
-  border:        none;
-  background:    transparent;
-  color:         var(--text-secondary);
-  transition:    all 0.2s;
-}
-
-.tab-btn.active {
-  background: var(--teal);
-  color:      white;
-}
-
-.tab-btn:hover:not(.active) {
-  background: var(--teal-light);
-  color:      var(--teal);
-}
-
-/* Score bar */
 .score-bar-track {
   height:        8px;
   background:    var(--bg-input);
@@ -279,59 +228,35 @@ p {
   transition:    width 1s ease-out;
 }
 
-/* Medical disclaimer box */
 .disclaimer-box {
   background:    #FFF5F5;
   border:        1px solid #FED7D7;
   border-radius: var(--radius-md);
-  padding:       16px 20px;
+  padding:       14px 16px;
   font-size:     12px;
   color:         #C53030;
   line-height:   1.6;
 }
 
-/* Loading pulse animation */
+/* ── Animations ──────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
 }
 
-.pulse {
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* Fade in animation for results */
 @keyframes fadeInUp {
-  from {
-    opacity:   0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity:   1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);     }
 }
 
-.fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-/* Responsive two column grid */
-.main-grid {
-  display:               grid;
-  grid-template-columns: 380px 1fr;
-  gap:                   24px;
-  align-items:           start;
-}
+.pulse      { animation: pulse 1.5s ease-in-out infinite; }
+.fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
 
-@media (max-width: 900px) {
-  .main-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-/* ── Page layout ────────────────────────────────── */
+/* ── Page layout — MOBILE FIRST ──────────────────── */
 .page-wrapper {
   min-height:     100vh;
   display:        flex;
@@ -339,62 +264,91 @@ p {
 }
 
 .main-content {
-  flex:    1;
-  width:   100%;
+  flex:      1;
+  width:     100%;
   max-width: 1280px;
-  margin:  0 auto;
-  padding: 24px 20px;
+  margin:    0 auto;
+  /* Mobile: comfortable side padding */
+  padding:   16px;
 }
 
-.left-column {
+/* Single column on mobile — stack vertically */
+.main-grid {
   display:        flex;
   flex-direction: column;
   gap:            16px;
 }
 
+.left-column,
 .right-column {
   display:        flex;
   flex-direction: column;
   gap:            16px;
+  width:          100%;
 }
 
 .full-width-section {
-  margin-top: 24px;
-  display:    flex;
+  margin-top:     16px;
+  display:        flex;
   flex-direction: column;
-  gap: 20px;
+  gap:            16px;
 }
 
-@media (max-width: 900px) {
+/* Tablet — slightly more padding */
+@media (min-width: 640px) {
   .main-content {
-    padding: 16px;
+    padding: 20px;
+  }
+
+  .main-grid {
+    gap: 20px;
   }
 }
 
-/* ── Header ─────────────────────────────────────── */
+/* Desktop — switch to two column side by side */
+@media (min-width: 1024px) {
+  .main-content {
+    padding: 28px 32px;
+  }
+
+  .main-grid {
+    display:               grid;
+    grid-template-columns: 380px 1fr;
+    gap:                   24px;
+    align-items:           start;
+  }
+
+  .full-width-section {
+    margin-top: 24px;
+    gap:        24px;
+  }
+}
+
+/* ── Header — MOBILE FIRST ───────────────────────── */
 .header {
-  background:   var(--bg-white);
+  background:    var(--bg-white);
   border-bottom: 1px solid var(--border);
-  position:     sticky;
-  top:          0;
-  z-index:      100;
-  box-shadow:   var(--shadow-sm);
+  position:      sticky;
+  top:           0;
+  z-index:       100;
+  box-shadow:    var(--shadow-sm);
 }
 
 .header-inner {
   max-width:   1280px;
   margin:      0 auto;
-  padding:     0 20px;
-  height:      64px;
+  /* Mobile: tighter padding, shorter height */
+  padding:     0 16px;
+  height:      56px;
   display:     flex;
   align-items: center;
-  gap:         16px;
+  gap:         12px;
 }
 
 .header-brand {
   display:     flex;
   align-items: center;
-  gap:         12px;
+  gap:         10px;
   flex-shrink: 0;
 }
 
@@ -422,45 +376,39 @@ p {
 .logo-text {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size:   20px;
+  font-size:   18px;
   color:       var(--teal);
 }
 
+/* Tagline hidden on mobile */
 .header-tagline {
-  font-size:  13px;
-  color:      var(--text-muted);
-  line-height: 1;
-  display:    none;
-}
-
-@media (min-width: 640px) {
-  .header-tagline {
-    display: block;
-  }
+  display: none;
 }
 
 .header-greeting {
   flex:        1;
-  display:     flex;
+  display:     none;
   align-items: center;
   gap:         8px;
   font-size:   13px;
   color:       var(--text-secondary);
   font-weight: 500;
   overflow:    hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .greeting-dot {
-  width:        8px;
-  height:       8px;
-  background:   var(--teal);
+  width:         8px;
+  height:        8px;
+  background:    var(--teal);
   border-radius: 50%;
-  flex-shrink:  0;
+  flex-shrink:   0;
 }
 
 .header-actions {
-  flex-shrink: 0;
-  margin-left: auto;
+  flex-shrink:  0;
+  margin-left:  auto;
 }
 
 .clear-data-btn {
@@ -474,6 +422,8 @@ p {
   cursor:        pointer;
   transition:    all 0.2s;
   white-space:   nowrap;
+  min-height:    36px;
+  touch-action:  manipulation;
 }
 
 .clear-data-btn:hover {
@@ -482,17 +432,105 @@ p {
   background:   var(--red-light);
 }
 
-@media (max-width: 640px) {
-  .header-inner {
-    height:  56px;
-    padding: 0 16px;
+/* Tablet+ — show tagline */
+@media (min-width: 640px) {
+  .header-inner    { height: 64px; padding: 0 20px; }
+  .logo-text       { font-size: 20px; }
+
+  .header-tagline {
+    display:      block;
+    font-size:    13px;
+    color:        var(--text-muted);
+    line-height:  1;
+    padding-left: 16px;
+    margin-left:  16px;
+    border-left:  1.5px solid var(--border);
+    white-space:  nowrap;
   }
 
-  .logo-text {
-    font-size: 18px;
-  }
+  .header-greeting { display: flex; }
+}
 
-  .header-greeting {
-    display: none;
-  }
+/* ── Input Panel — MOBILE FIRST ──────────────────── */
+.input-panel {
+  overflow: hidden;
+}
+
+.tab-bar {
+  display:                 flex;
+  gap:                     4px;
+  background:              var(--bg-input);
+  padding:                 6px;
+  border-top-left-radius:  var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.tab-btn {
+  flex:            1;
+  padding:         10px 8px;
+  border-radius:   var(--radius-sm);
+  font-size:       14px;
+  font-weight:     600;
+  cursor:          pointer;
+  border:          none;
+  background:      transparent;
+  color:           var(--text-secondary);
+  transition:      all 0.2s;
+  touch-action:    manipulation;
+  min-height:      40px;
+  text-align:      center;
+}
+
+.tab-btn.active {
+  background:    var(--teal);
+  color:         white;
+  border-radius: var(--radius-sm);
+  box-shadow:    var(--shadow-sm);
+}
+
+.tab-btn:hover:not(.active) {
+  background: var(--teal-light);
+  color:      var(--teal);
+}
+
+.tab-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-tab {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        20px 16px;
+}
+
+.field-group {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+}
+
+.field-hint {
+  font-size:  12px;
+  color:      var(--text-muted);
+  line-height: 1.4;
+}
+
+.input-error {
+  background:    var(--red-light);
+  color:         var(--red);
+  border:        1px solid #FED7D7;
+  border-radius: var(--radius-sm);
+  padding:       10px 14px;
+  font-size:     13px;
+}
+
+.find-cost-btn {
+  margin-top: 4px;
+}
+
+@media (min-width: 640px) {
+  .text-tab     { padding: 20px; }
+  .tab-bar      { padding: 12px 20px; }
 }
