@@ -44,18 +44,21 @@ export interface EstimateResult {
   session_id:              string
   is_returning_user:       boolean
   greeting:                string
+  symptom_reason:          string | null
+  urgency:                 string | null
 }
 
 export type InputMode = "text" | "voice" | "upload"
 
 const AGENT_STEPS = [
-  "Extracting plan details...",
+  "Analyzing your symptoms...",
+  "Identifying recommended care...",
   "Assessing severity...",
-  "Finding nearby hospitals...",
+  "Finding nearby providers...",
   "Checking network status...",
-  "Estimating costs...",
+  "Estimating your costs...",
   "Finding alternatives...",
-  "Generating answer...",
+  "Generating your summary...",
   "Running quality check...",
 ]
 
@@ -121,7 +124,7 @@ export default function Page() {
 
   const handleSubmit = useCallback(async () => {
     if (!careNeeded.trim()) {
-      setError("Please enter what care you need, e.g. knee MRI")
+      setError("Please describe your symptoms, e.g. 'my knee has been hurting for 3 weeks'")
       return
     }
     if (!zipCode.trim()) {
@@ -243,6 +246,8 @@ export default function Page() {
                 spokenSummary={result.spoken_summary}
                 nextStep={result.next_step}
                 usedDefaults={result.used_defaults}
+                symptomReason={result.symptom_reason}
+                urgency={result.urgency}
               />
             )}
 

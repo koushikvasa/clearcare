@@ -6,6 +6,8 @@ interface AIAnalysisProps {
   spokenSummary: string
   nextStep:      string
   usedDefaults:  boolean
+  symptomReason: string | null   // ADD
+  urgency:       string | null   // ADD
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -14,6 +16,8 @@ export default function AIAnalysis({
   spokenSummary,
   nextStep,
   usedDefaults,
+  symptomReason,   // ADD
+  urgency,         // ADD
 }: AIAnalysisProps) {
 
   const [isPlaying,  setIsPlaying]  = useState(false)
@@ -84,6 +88,14 @@ export default function AIAnalysis({
           </p>
         </div>
       )}
+      {symptomReason && (
+      <div className="symptom-banner">
+        <p className="symptom-label">
+          {urgency === "urgent" ? "⚠️ Urgent" : urgency === "soon" ? "📅 See Soon" : "🩺 Routine Care"}
+        </p>
+        <p className="symptom-text">{symptomReason}</p>
+      </div>
+    )}
 
       <div className="analysis-header">
         <div>

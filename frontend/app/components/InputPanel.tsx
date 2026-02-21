@@ -86,16 +86,16 @@ export default function InputPanel({
                 disabled={isLoading}
               />
               <p className="field-hint">
-                Leave blank to use standard Medicare rates
+                Leave blank to use standard Medicare rates. Or describe your symptoms and we'll identify the care you need.
               </p>
             </div>
 
             <div className="field-group">
-              <label className="input-label">Care Needed</label>
+              <label className="input-label">Describe Your Symptoms</label>
               <input
                 type="text"
                 className="input-field"
-                placeholder="e.g. knee MRI, colonoscopy, annual physical"
+                placeholder="e.g. my knee has been hurting for 3 weeks, hard to walk up stairs"
                 value={careNeeded}
                 onChange={e => setCareNeeded(e.target.value)}
                 onKeyDown={handleKeyDown}
