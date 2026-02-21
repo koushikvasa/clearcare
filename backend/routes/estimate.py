@@ -5,6 +5,7 @@ import re
 from fastapi import APIRouter, HTTPException, BackgroundTasks  # type: ignore[reportMissingImports]
 from pydantic import BaseModel, Field  # type: ignore[reportMissingImports]
 from typing import Optional
+from agent.analytics import log_query
 
 from agent.graph import run_agent
 from agent.critique import run_critique_loop
@@ -119,6 +120,20 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
                 alternative_description = alt_text[:150] if len(alt_text) > 10 else None
             except Exception:
                 pass
+        # Log to Lightdash analytics
+    background_tasks.add_task(
+        log_query,
+        session_id=session_id,
+        symptoms=request.care_needed,
+        care_needed=final_result.get("care_needed", request.care_needed),
+        zip_code=zip_code,
+        insurance=insurance_input,
+        hospitals_found=len(hospitals),
+        confidence=float(final_result.get("confidence", 0)),
+        final_score=int(final_result.get("final_score", 0)),
+        used_defaults=bool(final_result.get("used_defaults", False)),
+        urgency=str(final_result.get("urgency", "routine")),
+    )    
 
     # ── Build response ────────────────────────────────
     return {
