@@ -16,6 +16,8 @@ load_dotenv()
 # GPT-4o handles vision (reading insurance cards, medical records)
 # and powers the core agent reasoning
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Airia gateway: route LLM calls through api.airia.ai (get key at airia.ai)
+AIRIA_API_KEY = os.getenv("AIRIA_API_KEY", "")
 
 # ── Voice ─────────────────────────────────────────────
 # ElevenLabs converts agent text responses into natural speech

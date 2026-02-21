@@ -16,16 +16,18 @@ import json
 from langchain_openai import ChatOpenAI  # type: ignore[reportMissingImports]
 from langchain_core.messages import SystemMessage, HumanMessage  # type: ignore[reportMissingImports]
 
-from config import OPENAI_API_KEY
+from config import AIRIA_API_KEY, OPENAI_API_KEY
 from agent.prompts import SELF_CRITIQUE_PROMPT, COST_ESTIMATION_PROMPT
 
 
 # Separate LLM instance for critique
 # temperature=0 for consistent, deterministic scoring
+# Use Airia gateway when AIRIA_API_KEY is set; otherwise direct OpenAI
 critique_llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0,
-    api_key=OPENAI_API_KEY,
+    api_key=AIRIA_API_KEY or OPENAI_API_KEY,
+    base_url="https://api.airia.ai/v1" if AIRIA_API_KEY else None,
     timeout=30,
     max_retries=2,
 )

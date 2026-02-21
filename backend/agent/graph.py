@@ -6,7 +6,7 @@ from langgraph.graph import StateGraph, START, END  # type: ignore
 from langchain_openai import ChatOpenAI             # type: ignore
 from langchain_core.messages import SystemMessage, HumanMessage  # type: ignore
 import httpx # type: ignore
-from config import NPI_REGISTRY_URL, OPENAI_API_KEY
+from config import NPI_REGISTRY_URL, AIRIA_API_KEY, OPENAI_API_KEY
 from agent.tools import (
     extract_plan_details,
     find_hospitals,
@@ -17,7 +17,13 @@ from agent.tools import (
 )
 from agent.prompts import COST_ESTIMATION_PROMPT, SEVERITY_ASSESSMENT_PROMPT
 
-llm = ChatOpenAI(model="gpt-4o", temperature=0, api_key=OPENAI_API_KEY)
+# Use Airia gateway when AIRIA_API_KEY is set; otherwise direct OpenAI
+llm = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0,
+    api_key=AIRIA_API_KEY or OPENAI_API_KEY,
+    base_url="https://api.airia.ai/v1" if AIRIA_API_KEY else None,
+)
 
 
 # ── SYMPTOM MAPPING PROMPT ────────────────────────────
