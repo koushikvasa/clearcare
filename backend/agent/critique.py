@@ -25,7 +25,9 @@ from agent.prompts import SELF_CRITIQUE_PROMPT, COST_ESTIMATION_PROMPT
 critique_llm = ChatOpenAI(
     model="gpt-4o",
     temperature=0,
-    api_key=OPENAI_API_KEY
+    api_key=OPENAI_API_KEY,
+    timeout=30,
+    max_retries=2,
 )
 
 # Maximum rewrite attempts before we stop and return best version
@@ -256,12 +258,7 @@ spoken_summary, next_step
 
 
 def run_critique_loop(answer: dict, care_needed: str, has_insurance: bool) -> dict:
-    # Safety — if answer is missing key fields skip critique
-    if not answer.get("spoken_summary") and not answer.get("headline"):
-        answer["score_history"] = []
-        answer["final_score"]   = 0
-        answer["iterations"]    = 0
-        return answer
+
     """
     Run the full self-critique and improvement loop.
 
@@ -278,6 +275,13 @@ def run_critique_loop(answer: dict, care_needed: str, has_insurance: bool) -> di
         score_history is used by the frontend to animate
         the confidence meter climbing in real time.
     """
+        # Safety — if answer is missing key fields skip critique
+    if not answer.get("spoken_summary") and not answer.get("headline"):
+        answer["score_history"] = []
+        answer["final_score"]   = 0
+        answer["iterations"]    = 0
+        return answer
+
     score_history  = []
     current_answer = answer
     best_answer    = answer
