@@ -1,0 +1,31 @@
+name: Queries by Urgency Level
+description: Breakdown of queries by urgency — shows proportion of low, medium, high, and emergency cases.
+tableName: clearcare_queries
+updatedAt: "2026-02-21T00:00:00.000Z"
+metricQuery:
+  exploreName: clearcare_queries
+  dimensions:
+    - clearcare_queries_urgency
+  metrics:
+    - clearcare_queries_total_queries
+  filters: {}
+  sorts:
+    - fieldId: clearcare_queries_total_queries
+      descending: true
+  limit: 10
+  tableCalculations: []
+  additionalMetrics: []
+  customDimensions: []
+chartConfig:
+  type: pie
+  config:
+    valueLabel: outside
+    showPercentage: true
+    showValue: false
+    showLegend: true
+    groupFieldIds:
+      - clearcare_queries_urgency
+    metricId: clearcare_queries_total_queries
+slug: queries-by-urgency
+spaceSlug: shared
+version: 1

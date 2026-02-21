@@ -1,0 +1,38 @@
+name: Top Care Types Requested
+description: Most common types of care or procedures users searched for — shows what patients need most.
+tableName: clearcare_queries
+updatedAt: "2026-02-21T00:00:00.000Z"
+metricQuery:
+  exploreName: clearcare_queries
+  dimensions:
+    - clearcare_queries_care_needed
+  metrics:
+    - clearcare_queries_total_queries
+  filters: {}
+  sorts:
+    - fieldId: clearcare_queries_total_queries
+      descending: true
+  limit: 15
+  tableCalculations: []
+  additionalMetrics: []
+  customDimensions: []
+chartConfig:
+  type: cartesian
+  config:
+    layout:
+      xField: clearcare_queries_care_needed
+      yField:
+        - clearcare_queries_total_queries
+      flipAxes: true
+    eChartsConfig:
+      series:
+        - type: bar
+          encode:
+            xRef:
+              field: clearcare_queries_care_needed
+            yRef:
+              field: clearcare_queries_total_queries
+          yAxisIndex: 0
+slug: top-care-needed
+spaceSlug: shared
+version: 1

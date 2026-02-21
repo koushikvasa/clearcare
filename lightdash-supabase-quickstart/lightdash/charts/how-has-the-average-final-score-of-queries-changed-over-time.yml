@@ -1,0 +1,50 @@
+name: How has the average final score of queries changed over time?
+description: >-
+  Tracks the trend of average final scores across queries by creation date to
+  identify performance patterns and variations over time.
+tableName: clearcare_queries
+updatedAt: "2026-02-21T20:58:21.596Z"
+metricQuery:
+  exploreName: clearcare_queries
+  dimensions:
+    - clearcare_queries_created_at_day
+  metrics:
+    - clearcare_queries_avg_final_score
+  filters: {}
+  sorts:
+    - fieldId: clearcare_queries_avg_final_score
+      descending: true
+  limit: 500
+  metricOverrides: {}
+  dimensionOverrides: {}
+  tableCalculations: []
+  additionalMetrics: []
+  customDimensions: []
+chartConfig:
+  type: cartesian
+  config:
+    layout:
+      stack: none
+      xField: clearcare_queries_created_at_day
+      yField:
+        - clearcare_queries_avg_final_score
+      flipAxes: false
+    eChartsConfig:
+      series:
+        - type: scatter
+          encode:
+            xRef:
+              field: clearcare_queries_created_at_day
+            yRef:
+              field: clearcare_queries_avg_final_score
+          yAxisIndex: 0
+          isFilteredOut: false
+      showAxisTicks: false
+slug: how-has-the-average-final-score-of-queries-changed-over-time
+tableConfig:
+  columnOrder:
+    - clearcare_queries_created_at_day
+    - clearcare_queries_avg_final_score
+spaceSlug: shared
+version: 1
+downloadedAt: "2026-02-21T20:59:03.972Z"

@@ -1,0 +1,57 @@
+name: Avg Confidence vs Final Score Over Time
+description: Compares average pre-critique confidence with post-critique final score per day — shows how much the self-critique loop improves responses.
+tableName: clearcare_queries
+updatedAt: "2026-02-21T00:00:00.000Z"
+metricQuery:
+  exploreName: clearcare_queries
+  dimensions:
+    - clearcare_queries_created_at_day
+  metrics:
+    - clearcare_queries_avg_confidence
+    - clearcare_queries_avg_final_score
+  filters: {}
+  sorts:
+    - fieldId: clearcare_queries_created_at_day
+      descending: false
+  limit: 500
+  tableCalculations: []
+  additionalMetrics: []
+  customDimensions: []
+chartConfig:
+  type: cartesian
+  config:
+    layout:
+      xField: clearcare_queries_created_at_day
+      yField:
+        - clearcare_queries_avg_confidence
+        - clearcare_queries_avg_final_score
+      showGridY: true
+    eChartsConfig:
+      xAxis:
+        - name: Date
+      yAxis:
+        - name: Score (0-100)
+      legend:
+        show: true
+      series:
+        - type: line
+          name: Avg Confidence
+          smooth: true
+          encode:
+            xRef:
+              field: clearcare_queries_created_at_day
+            yRef:
+              field: clearcare_queries_avg_confidence
+          yAxisIndex: 0
+        - type: line
+          name: Avg Final Score
+          smooth: true
+          encode:
+            xRef:
+              field: clearcare_queries_created_at_day
+            yRef:
+              field: clearcare_queries_avg_final_score
+          yAxisIndex: 0
+slug: confidence-vs-final-score
+spaceSlug: shared
+version: 1

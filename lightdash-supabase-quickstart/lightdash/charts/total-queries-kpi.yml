@@ -1,0 +1,24 @@
+name: Total Queries
+description: Total number of ClearCare queries made by all users.
+tableName: clearcare_queries
+updatedAt: "2026-02-21T00:00:00.000Z"
+metricQuery:
+  exploreName: clearcare_queries
+  dimensions: []
+  metrics:
+    - clearcare_queries_total_queries
+  filters: {}
+  sorts: []
+  limit: 1
+  tableCalculations: []
+  additionalMetrics: []
+  customDimensions: []
+chartConfig:
+  type: big_number
+  config:
+    selectedField: clearcare_queries_total_queries
+    label: Total Queries
+    showBigNumberLabel: true
+slug: total-queries-kpi
+spaceSlug: shared
+version: 1

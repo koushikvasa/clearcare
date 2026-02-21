@@ -1,0 +1,116 @@
+type: model
+name: clearcare_queries
+label: ClearCare Queries
+description: Every query a ClearCare user has made — symptoms, care needed, zip, hospitals found, confidence, and final score.
+sql_from: public.clearcare_queries
+primary_key: id
+group_label: ClearCare
+default_time_dimension:
+  field: created_at
+  interval: DAY
+
+dimensions:
+  - name: id
+    type: string
+    sql: ${TABLE}.id
+    label: Query ID
+    description: Unique identifier for each query (UUID)
+    hidden: true
+
+  - name: session_id
+    type: string
+    sql: ${TABLE}.session_id
+    label: Session ID
+    description: Session that made this query
+
+  - name: created_at
+    type: timestamp
+    sql: ${TABLE}.created_at
+    label: Created at
+    description: When the query was made
+    time_intervals: [RAW, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR]
+
+  - name: symptoms
+    type: string
+    sql: ${TABLE}.symptoms
+    label: Symptoms
+    description: Symptoms the user described
+
+  - name: care_needed
+    type: string
+    sql: ${TABLE}.care_needed
+    label: Care needed
+    description: Procedure or care type the agent identified
+
+  - name: zip_code
+    type: string
+    sql: ${TABLE}.zip_code
+    label: Zip code
+
+  - name: insurance
+    type: string
+    sql: ${TABLE}.insurance
+    label: Insurance plan
+
+  - name: hospitals_found
+    type: number
+    sql: ${TABLE}.hospitals_found
+    label: Hospitals found
+    metrics:
+      total_hospitals_found:
+        type: sum
+        label: Total hospitals found
+      avg_hospitals_found:
+        type: average
+        label: Avg hospitals found
+        round: 1
+
+  - name: confidence
+    type: number
+    sql: ${TABLE}.confidence
+    label: Confidence score
+    description: Agent confidence (0–100) before self-critique
+    metrics:
+      avg_confidence:
+        type: average
+        label: Avg confidence
+        round: 1
+      min_confidence:
+        type: min
+        label: Min confidence
+      max_confidence:
+        type: max
+        label: Max confidence
+
+  - name: final_score
+    type: number
+    sql: ${TABLE}.final_score
+    label: Final score
+    description: Agent confidence (0–100) after self-critique
+    metrics:
+      avg_final_score:
+        type: average
+        label: Avg final score
+        round: 1
+
+  - name: used_defaults
+    type: boolean
+    sql: ${TABLE}.used_defaults
+    label: Used defaults
+    description: True if the agent fell back to default plan values
+
+  - name: urgency
+    type: string
+    sql: ${TABLE}.urgency
+    label: Urgency
+    description: "Urgency level: low, medium, high, emergency"
+
+metrics:
+  total_queries:
+    type: count
+    sql: ${TABLE}.id
+    label: Total queries
+  unique_sessions:
+    type: count_distinct
+    sql: ${TABLE}.session_id
+    label: Unique sessions

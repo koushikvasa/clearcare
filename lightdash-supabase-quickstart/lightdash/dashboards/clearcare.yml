@@ -1,0 +1,120 @@
+name: ClearCare
+description: ClearCare analytics — queries, sessions, confidence scores, care types, and urgency.
+updatedAt: "2026-02-21T00:00:00.000Z"
+slug: clearcare
+spaceSlug: shared
+version: 1
+tabs: []
+filters:
+  metrics: []
+  dimensions: []
+  tableCalculations: []
+
+tiles:
+  # ── Row 1: KPI big numbers ───────────────────────────────────────────────
+  - type: saved_chart
+    x: 0
+    "y": 0
+    w: 12
+    h: 5
+    tabUuid: null
+    tileSlug: total-queries-kpi
+    properties:
+      chartSlug: total-queries-kpi
+      chartName: Total Queries
+      title: ""
+      hideTitle: false
+
+  - type: saved_chart
+    x: 12
+    "y": 0
+    w: 12
+    h: 5
+    tabUuid: null
+    tileSlug: unique-sessions-kpi
+    properties:
+      chartSlug: unique-sessions-kpi
+      chartName: Unique Sessions
+      title: ""
+      hideTitle: false
+
+  - type: saved_chart
+    x: 24
+    "y": 0
+    w: 12
+    h: 5
+    tabUuid: null
+    tileSlug: avg-confidence-kpi
+    properties:
+      chartSlug: avg-confidence-kpi
+      chartName: Avg Confidence Score
+      title: ""
+      hideTitle: false
+
+  # ── Row 2: Volume + urgency ──────────────────────────────────────────────
+  - type: saved_chart
+    x: 0
+    "y": 5
+    w: 20
+    h: 9
+    tabUuid: null
+    tileSlug: queries-per-day
+    properties:
+      chartSlug: queries-per-day
+      chartName: Queries Per Day
+      title: ""
+      hideTitle: false
+
+  - type: saved_chart
+    x: 20
+    "y": 5
+    w: 16
+    h: 9
+    tabUuid: null
+    tileSlug: queries-by-urgency
+    properties:
+      chartSlug: queries-by-urgency
+      chartName: Queries by Urgency Level
+      title: ""
+      hideTitle: false
+
+  # ── Row 3: Score trends ──────────────────────────────────────────────────
+  - type: saved_chart
+    x: 0
+    "y": 14
+    w: 18
+    h: 9
+    tabUuid: null
+    tileSlug: how-has-the-average-final-score-of-queries-changed-over-time
+    properties:
+      chartSlug: how-has-the-average-final-score-of-queries-changed-over-time
+      chartName: How has the average final score of queries changed over time?
+      title: ""
+      hideTitle: false
+
+  - type: saved_chart
+    x: 18
+    "y": 14
+    w: 18
+    h: 9
+    tabUuid: null
+    tileSlug: confidence-vs-final-score
+    properties:
+      chartSlug: confidence-vs-final-score
+      chartName: Avg Confidence vs Final Score Over Time
+      title: ""
+      hideTitle: false
+
+  # ── Row 4: Top care types ────────────────────────────────────────────────
+  - type: saved_chart
+    x: 0
+    "y": 23
+    w: 36
+    h: 10
+    tabUuid: null
+    tileSlug: top-care-needed
+    properties:
+      chartSlug: top-care-needed
+      chartName: Top Care Types Requested
+      title: ""
+      hideTitle: false

@@ -1,0 +1,42 @@
+name: Queries Per Day
+description: Number of ClearCare queries made each day — shows usage trends over time.
+tableName: clearcare_queries
+updatedAt: "2026-02-21T00:00:00.000Z"
+metricQuery:
+  exploreName: clearcare_queries
+  dimensions:
+    - clearcare_queries_created_at_day
+  metrics:
+    - clearcare_queries_total_queries
+  filters: {}
+  sorts:
+    - fieldId: clearcare_queries_created_at_day
+      descending: false
+  limit: 500
+  tableCalculations: []
+  additionalMetrics: []
+  customDimensions: []
+chartConfig:
+  type: cartesian
+  config:
+    layout:
+      xField: clearcare_queries_created_at_day
+      yField:
+        - clearcare_queries_total_queries
+      showGridY: true
+    eChartsConfig:
+      xAxis:
+        - name: Date
+      yAxis:
+        - name: Queries
+      series:
+        - type: bar
+          encode:
+            xRef:
+              field: clearcare_queries_created_at_day
+            yRef:
+              field: clearcare_queries_total_queries
+          yAxisIndex: 0
+slug: queries-per-day
+spaceSlug: shared
+version: 1

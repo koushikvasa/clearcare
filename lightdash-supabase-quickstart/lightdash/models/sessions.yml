@@ -1,0 +1,73 @@
+type: model
+name: sessions
+label: Sessions
+description: ClearCare user sessions — insurance plan details, zip code, and care history stored per session.
+sql_from: public.sessions
+primary_key: id
+group_label: ClearCare
+default_time_dimension:
+  field: updated_at
+  interval: DAY
+
+dimensions:
+  - name: id
+    type: string
+    sql: ${TABLE}.id
+    label: Row ID
+    hidden: true
+
+  - name: session_id
+    type: string
+    sql: ${TABLE}.session_id
+    label: Session ID
+    description: Unique session identifier (UUID from browser localStorage)
+
+  - name: zip_code
+    type: string
+    sql: ${TABLE}.zip_code
+    label: Zip code
+
+  - name: insurance_input
+    type: string
+    sql: ${TABLE}.insurance_input
+    label: Insurance input
+    description: Raw insurance text the user entered
+
+  - name: created_at
+    type: timestamp
+    sql: ${TABLE}.created_at
+    label: Created at
+    description: When the session was first created
+    time_intervals: [RAW, DAY, WEEK, MONTH, QUARTER, YEAR]
+
+  - name: updated_at
+    type: timestamp
+    sql: ${TABLE}.updated_at
+    label: Last updated
+    description: When the session was last used
+    time_intervals: [RAW, DAY, WEEK, MONTH, QUARTER, YEAR]
+
+  # plan_details and care_history are jsonb — exposed as raw text for reference
+  - name: plan_details
+    type: string
+    sql: ${TABLE}.plan_details::text
+    label: Plan details (JSON)
+    description: Extracted insurance plan details (raw JSON)
+    hidden: true
+
+  - name: care_history
+    type: string
+    sql: ${TABLE}.care_history::text
+    label: Care history (JSON)
+    description: List of past care searches (raw JSON)
+    hidden: true
+
+metrics:
+  total_sessions:
+    type: count_distinct
+    sql: ${TABLE}.session_id
+    label: Total sessions
+  total_rows:
+    type: count
+    sql: ${TABLE}.id
+    label: Total rows
