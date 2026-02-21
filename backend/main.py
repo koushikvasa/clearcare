@@ -60,7 +60,7 @@ app.add_middleware(
         "https://*.vercel.app",
     ],
     allow_credentials=True,
-    allow_methods=["*"],                       # allow all HTTP methods
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],                       # allow all HTTP methods
     allow_headers=["*"],                       # allow all headers
 )
 

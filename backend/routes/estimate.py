@@ -1,7 +1,9 @@
 # routes/estimate.py
 import uuid
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel, Field
+import asyncio
+import re
+from fastapi import APIRouter, HTTPException, BackgroundTasks  # type: ignore[reportMissingImports]
+from pydantic import BaseModel, Field  # type: ignore[reportMissingImports]
 from typing import Optional
 
 from agent.graph import run_agent
@@ -25,7 +27,7 @@ class EstimateRequest(BaseModel):
 async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
 
     # ── Session setup ─────────────────────────────────
-    session_id = request.session_id or str(uuid.uuid4())
+    session_id   = request.session_id or str(uuid.uuid4())
     user_context = get_returning_user_context(session_id)
 
     insurance_input = request.insurance_input
@@ -54,13 +56,20 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
 
-    # ── Run critique ──────────────────────────────────
+    # ── Run critique in executor ───────────────────────
+    # run_in_executor prevents the sync LangChain calls inside
+    # run_critique_loop from blocking the async event loop,
+    # which was causing Railway to drop outbound OpenAI connections
     has_insurance = bool(insurance_input)
     try:
-        final_result = run_critique_loop(
-            answer=agent_result,
-            care_needed=request.care_needed,
-            has_insurance=has_insurance,
+        loop = asyncio.get_event_loop()
+        final_result = await loop.run_in_executor(
+            None,
+            lambda: run_critique_loop(
+                answer=agent_result,
+                care_needed=request.care_needed,
+                has_insurance=has_insurance,
+            )
         )
     except Exception as e:
         print(f"Critique error: {e}")
@@ -80,38 +89,34 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
         zip_code=zip_code,
     )
 
-    # ── Map costs from hospitals ──────────────────────
-    # node_generate_answer never sets in_network_cost directly
-    # We derive it here from the hospitals list
-    hospitals = final_result.get("hospitals", [])
-
+    # ── Derive costs from hospitals ───────────────────
+    # node_generate_answer stores costs inside hospitals[]
+    # not as top-level fields, so we map them here
+    hospitals   = final_result.get("hospitals", [])
     in_network  = [h for h in hospitals if h.get("network_status") in ("in-network", "accepts-medicare")]
     out_network = [h for h in hospitals if h.get("network_status") == "out-of-network"]
 
     in_network_cost     = in_network[0]["estimated_cost"]  if in_network  else None
     out_of_network_cost = out_network[0]["estimated_cost"] if out_network else None
 
-    # Use whatever cost exists as the display cost
-    # Priority: in-network > out-of-network > first hospital
+    # Best display cost: in-network → out-of-network → first hospital
     display_cost = (
         in_network_cost or
         out_of_network_cost or
         (hospitals[0]["estimated_cost"] if hospitals else None)
     )
 
-    # Parse alternative cost from alternatives text
+    # Parse alternative cost from alternatives text if not set directly
     alternative_cost        = final_result.get("alternative_cost")
     alternative_description = final_result.get("alternative_description")
 
-    # If not set directly, try to parse from alternatives string
     if not alternative_cost and final_result.get("alternatives"):
-        import re
         alt_text = str(final_result.get("alternatives", ""))
-        match = re.search(r"\$?([\d,]+)", alt_text)
+        match    = re.search(r"\$?([\d,]+)", alt_text)
         if match:
             try:
-                alternative_cost = float(match.group(1).replace(",", ""))
-                alternative_description = alt_text[:100] if len(alt_text) > 10 else None
+                alternative_cost        = float(match.group(1).replace(",", ""))
+                alternative_description = alt_text[:150] if len(alt_text) > 10 else None
             except Exception:
                 pass
 
