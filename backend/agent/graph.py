@@ -284,16 +284,32 @@ def node_find_hospitals(state: AgentState) -> dict:
         except Exception:
             return []
 
-    def _parse(results: list) -> list:
+    zip3 = zip_code[:3] if len(zip_code) >= 3 else zip_code
+
+    def _location_addr(addresses: list) -> dict:
+        """Return the practice-location address, falling back to the first entry."""
+        for a in addresses:
+            if a.get("address_purpose", "").upper() == "LOCATION":
+                return a
+        return addresses[0] if addresses else {}
+
+    def _parse(results: list, require_zip3: bool = True) -> list:
+        """Parse NPI results, always using the practice-location address.
+        When require_zip3 is True, drop providers whose zip doesn't share
+        the first 3 digits with the user's zip (prevents cross-state mixing)."""
         hospitals = []
         for p in results:
             basic = p.get("basic", {})
-            addr  = (p.get("addresses") or [{}])[0]
+            addr  = _location_addr(p.get("addresses") or [{}])
             name  = (
                 basic.get("organization_name") or
                 f"Dr. {basic.get('first_name','')} {basic.get('last_name','')}".strip()
             )
             if not name or name.strip() == "Dr.":
+                continue
+            provider_zip = addr.get("postal_code", "")
+            # Enforce geographic proximity: provider zip must start with same 3 digits
+            if require_zip3 and not provider_zip.startswith(zip3):
                 continue
             hospitals.append({
                 "hospital":       name.strip(),
@@ -306,27 +322,27 @@ def node_find_hospitals(state: AgentState) -> dict:
         return hospitals
 
     hospitals = []
-    base = {"version": "2.1", "postal_code": zip_code, "limit": 8}
+    base = {"version": "2.1", "postal_code": zip_code, "limit": 10}
 
-    # Tier 1: organizations matching the specialty
+    # Tier 1: organizations matching the specialty in this exact zip
     if specialty != "hospital":
         results = _fetch({**base, "taxonomy_description": specialty, "entity_type_code": "2"})
         hospitals = _parse(results)
 
-    # Tier 2: any organization (hospital) in this zip
+    # Tier 2: any organization (hospital) in this exact zip
     if not hospitals:
         results = _fetch({**base, "taxonomy_description": "hospital", "entity_type_code": "2"})
         hospitals = _parse(results)
 
-    # Tier 3: any provider (individual or org) in this zip, no specialty filter
+    # Tier 3: any provider (individual or org) in this exact zip, no specialty filter
     if not hospitals:
         results = _fetch({**base})
         hospitals = _parse(results)
 
-    # Tier 4: try a broader 3-digit zip prefix area
+    # Tier 4: widen to the 3-digit zip prefix but still enforce same prefix (same metro area)
     if not hospitals and len(zip_code) >= 3:
-        results = _fetch({"version": "2.1", "postal_code": zip_code[:3], "limit": 5})
-        hospitals = _parse(results)
+        results = _fetch({"version": "2.1", "postal_code": zip3, "limit": 10})
+        hospitals = _parse(results, require_zip3=True)
 
     return {"hospitals": hospitals}
 
