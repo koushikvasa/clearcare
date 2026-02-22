@@ -85,7 +85,7 @@ const AGENT_STEPS = [
   "Generating your personalized summary...",
 ]
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "")
 
 export default function Page() {
 
