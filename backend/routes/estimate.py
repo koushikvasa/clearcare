@@ -120,7 +120,12 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
                 alternative_description = alt_text[:150] if len(alt_text) > 10 else None
             except Exception:
                 pass
-        # Log to Lightdash analytics
+    # signal_confidence is computed from facts in node_generate_answer.
+    # Read it from agent_result (before critique), because the critique
+    # rewrite loop strips unknown fields when it rewrites the text answer.
+    signal_confidence  = int(agent_result.get("signal_confidence", 0))
+    confidence_signals = agent_result.get("confidence_signals", {})
+
     background_tasks.add_task(
         log_query,
         session_id=session_id,
@@ -129,11 +134,12 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
         zip_code=zip_code,
         insurance=insurance_input,
         hospitals_found=len(hospitals),
-        confidence=float(final_result.get("confidence", 0)),
+        confidence=round(signal_confidence / 100.0, 4),
         final_score=int(final_result.get("final_score", 0)),
         used_defaults=bool(final_result.get("used_defaults", False)),
         urgency=str(final_result.get("urgency", "routine")),
-    )    
+        signal_confidence=signal_confidence,
+    )
 
     # ── Build response ────────────────────────────────
     return {
@@ -145,6 +151,8 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
         "alternative_cost":        alternative_cost,
         "alternative_description": alternative_description,
         "confidence":              float(final_result.get("confidence", 0.0)),
+        "signal_confidence":       signal_confidence,
+        "confidence_signals":      confidence_signals,
         "hospitals":               hospitals,
         "score_history":           final_result.get("score_history", []),
         "final_score":             final_result.get("final_score", 0),
@@ -153,6 +161,8 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
         "session_id":              session_id,
         "is_returning_user":       user_context.get("is_returning", False),
         "greeting":                user_context.get("greeting", ""),
+        "symptom_reason":          final_result.get("symptom_reason", ""),
+        "urgency":                 final_result.get("urgency", "routine"),
     }
 
 

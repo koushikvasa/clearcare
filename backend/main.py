@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     print("Backend ready\n")
     yield
     # ── Shutdown ──────────────────────────────────────
-    print("\n👋 ClearCare backend shutting down")
+    print("\nClearCare backend shutting down")
 
 
 # ── App instance ──────────────────────────────────────

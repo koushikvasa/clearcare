@@ -51,23 +51,25 @@ return it as-is with a brief explanation.
 
 # ── STATE ─────────────────────────────────────────────
 class AgentState(TypedDict):
-    insurance_input:  str
-    input_type:       str
-    care_needed:      str
-    zip_code:         str
-    file_path:        Optional[str]
-    medical_history:  Optional[str]
-    has_insurance:    Optional[bool]
-    plan_details:     Optional[dict]
-    symptom_reason:   Optional[str]   # NEW: why symptoms map to this care
-    urgency:          Optional[str]   # NEW: urgent / soon / routine
-    severity:         Optional[str]
-    hospitals:        Optional[list]
-    network_results:  Optional[list]
-    cost_estimate:    Optional[dict]
-    alternatives:     Optional[str]
-    final_answer:     Optional[dict]
-    error:            Optional[str]
+    insurance_input:     str
+    input_type:          str
+    care_needed:         str
+    zip_code:            str
+    file_path:           Optional[str]
+    medical_history:     Optional[str]
+    has_insurance:       Optional[bool]
+    plan_details:        Optional[dict]
+    symptom_reason:      Optional[str]
+    urgency:             Optional[str]
+    severity:            Optional[str]
+    hospitals:           Optional[list]
+    network_results:     Optional[list]
+    cost_estimate:       Optional[dict]
+    alternatives:        Optional[str]
+    signal_confidence:   Optional[int]   # 0-100, computed from measurable signals
+    confidence_signals:  Optional[dict]  # breakdown of what contributed
+    final_answer:        Optional[dict]
+    error:               Optional[str]
 
 
 # ── HELPERS ───────────────────────────────────────────
@@ -433,6 +435,69 @@ def node_find_alternatives(state: AgentState) -> dict:
     return {"alternatives": result}
 
 
+def compute_signal_confidence(state: AgentState) -> tuple[int, dict]:
+    """
+    Compute confidence 0-100 from measurable facts, not LLM self-assessment.
+
+    Signals and maximum points:
+      providers_found      25 pts  — did NPI return any hospitals?
+      insurance_recognized 20 pts  — did we parse a real plan (not defaults)?
+      procedure_mapped     20 pts  — did GPT explain WHY the symptom → procedure?
+      network_checked      15 pts  — did at least one provider accept the plan?
+      costs_calculated     10 pts  — did we produce a non-zero cost figure?
+      urgency_set          10 pts  — did we identify urgency level?
+    Total max: 100
+
+    Returned as (score: int, signals: dict) so the full breakdown
+    can be shown in the UI and stored for debugging.
+    """
+    hospitals      = (state.get("cost_estimate") or {}).get("hospitals", [])
+    plan_details   = state.get("plan_details") or {}
+    urgency        = state.get("urgency") or ""
+    symptom_reason = state.get("symptom_reason") or ""
+
+    signals: dict = {}
+
+    # ── providers_found ──────────────────────────────
+    n = len(hospitals)
+    if n >= 4:
+        signals["providers_found"] = 25
+    elif n >= 1:
+        signals["providers_found"] = 15
+    else:
+        signals["providers_found"] = 0
+
+    # ── insurance_recognized ─────────────────────────
+    # is_default=True means we fell back to standard Medicare values
+    signals["insurance_recognized"] = 0 if plan_details.get("is_default", True) else 20
+
+    # ── procedure_mapped ─────────────────────────────
+    # symptom_reason means GPT explained the symptom→procedure link
+    if len(symptom_reason) > 20:
+        signals["procedure_mapped"] = 20
+    elif state.get("care_needed"):
+        signals["procedure_mapped"] = 10
+    else:
+        signals["procedure_mapped"] = 0
+
+    # ── network_checked ──────────────────────────────
+    in_network = [
+        h for h in hospitals
+        if h.get("network_status") in ("in-network", "accepts-medicare")
+    ]
+    signals["network_checked"] = 15 if in_network else 0
+
+    # ── costs_calculated ─────────────────────────────
+    with_cost = [h for h in hospitals if (h.get("estimated_cost") or 0) > 0]
+    signals["costs_calculated"] = 10 if with_cost else 0
+
+    # ── urgency_set ──────────────────────────────────
+    signals["urgency_set"] = 10 if urgency else 0
+
+    score = sum(signals.values())
+    return score, signals
+
+
 def node_generate_answer(state: AgentState) -> dict:
     plan_details    = state.get("plan_details", {})
     hospitals       = (state.get("cost_estimate") or {}).get("hospitals", [])
@@ -503,14 +568,23 @@ IMPORTANT: If is_default is True, end with:
             "confidence":     0.5
         }
 
-    answer["hospitals"]      = hospitals
-    answer["plan_details"]   = plan_details
-    answer["alternatives"]   = alternatives
-    answer["used_defaults"]  = is_default
-    answer["symptom_reason"] = symptom_reason
-    answer["urgency"]        = urgency
+    # Compute signal-based confidence from measurable facts
+    sig_score, sig_signals = compute_signal_confidence(state)
 
-    return {"final_answer": answer}
+    answer["hospitals"]           = hospitals
+    answer["plan_details"]        = plan_details
+    answer["alternatives"]        = alternatives
+    answer["used_defaults"]       = is_default
+    answer["symptom_reason"]      = symptom_reason
+    answer["urgency"]             = urgency
+    answer["signal_confidence"]   = sig_score
+    answer["confidence_signals"]  = sig_signals
+
+    return {
+        "final_answer":       answer,
+        "signal_confidence":  sig_score,
+        "confidence_signals": sig_signals,
+    }
 
 
 # ── ROUTING ───────────────────────────────────────────
@@ -567,23 +641,25 @@ def run_agent(
     medical_history: str = ""
 ) -> dict:
     initial_state: AgentState = {
-        "insurance_input": insurance_input,
-        "input_type":      input_type,
-        "care_needed":     care_needed,
-        "zip_code":        zip_code,
-        "file_path":       file_path,
-        "medical_history": medical_history,
-        "has_insurance":   None,
-        "plan_details":    None,
-        "symptom_reason":  None,
-        "urgency":         None,
-        "severity":        None,
-        "hospitals":       None,
-        "network_results": None,
-        "cost_estimate":   None,
-        "alternatives":    None,
-        "final_answer":    None,
-        "error":           None,
+        "insurance_input":    insurance_input,
+        "input_type":         input_type,
+        "care_needed":        care_needed,
+        "zip_code":           zip_code,
+        "file_path":          file_path,
+        "medical_history":    medical_history,
+        "has_insurance":      None,
+        "plan_details":       None,
+        "symptom_reason":     None,
+        "urgency":            None,
+        "severity":           None,
+        "hospitals":          None,
+        "network_results":    None,
+        "cost_estimate":      None,
+        "alternatives":       None,
+        "signal_confidence":  None,
+        "confidence_signals": None,
+        "final_answer":       None,
+        "error":              None,
     }
     try:
         final_state = agent.invoke(initial_state)

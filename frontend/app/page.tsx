@@ -37,6 +37,8 @@ export interface EstimateResult {
   alternative_cost:        number | null
   alternative_description: string | null
   confidence:              number
+  signal_confidence:       number
+  confidence_signals:      Record<string, number>
   hospitals:               Hospital[]
   score_history:           ScoreIteration[]
   final_score:             number

@@ -354,7 +354,25 @@ button { font-family: var(--font-body); }
 .confidence-section { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
 .confidence-row     { display: flex; justify-content: space-between; align-items: center; }
 .confidence-label   { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-.confidence-value   { font-size: 13px; font-weight: 700; color: var(--teal); }
+.confidence-value   { font-size: 16px; font-weight: 700; color: var(--teal); }
+.confidence-max     { font-size: 11px; font-weight: 400; color: var(--text-muted); margin-left: 1px; }
+
+.signal-breakdown { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+
+.signal-row {
+  display:         flex;
+  align-items:     center;
+  gap:             8px;
+  font-size:       12px;
+  padding:         4px 6px;
+  border-radius:   var(--radius-sm);
+}
+.signal-pass { background: var(--teal-light); color: var(--teal-dark); }
+.signal-fail { background: var(--bg-input);   color: var(--text-muted); }
+
+.signal-icon  { font-size: 11px; font-weight: 700; width: 12px; flex-shrink: 0; }
+.signal-label { flex: 1; }
+.signal-pts   { font-weight: 600; font-size: 11px; flex-shrink: 0; opacity: 0.75; }
 
 @media (min-width: 640px) {
   .cost-amount { font-size: 52px; }

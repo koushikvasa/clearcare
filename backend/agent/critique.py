@@ -244,12 +244,13 @@ spoken_summary, next_step
 
         rewritten = parse_llm_json(response.content)
 
-        # Preserve structured data from original answer
-        # Only the text fields should change between rewrites
-        rewritten["hospitals"]     = answer.get("hospitals", [])
-        rewritten["plan_details"]  = answer.get("plan_details", {})
-        rewritten["alternatives"]  = answer.get("alternatives", "")
-        rewritten["used_defaults"] = answer.get("used_defaults", False)
+        # Preserve all structured data — only text fields should change
+        rewritten["hospitals"]          = answer.get("hospitals", [])
+        rewritten["plan_details"]       = answer.get("plan_details", {})
+        rewritten["alternatives"]       = answer.get("alternatives", "")
+        rewritten["used_defaults"]      = answer.get("used_defaults", False)
+        rewritten["signal_confidence"]  = answer.get("signal_confidence", 0)
+        rewritten["confidence_signals"] = answer.get("confidence_signals", {})
 
         return rewritten
 

@@ -137,22 +137,49 @@ export default function ResultsPanel({
         )}
       </div>
 
-      {/* Confidence bar */}
+      {/* Signal-based confidence */}
       <div className="confidence-section">
         <div className="confidence-row">
-          <span className="confidence-label">Confidence</span>
+          <span className="confidence-label">Data Confidence</span>
           <span className="confidence-value">
-            {Math.round(result.confidence * 100)}%
+            {result.signal_confidence ?? Math.round(result.confidence * 100)}
+            <span className="confidence-max">/100</span>
           </span>
         </div>
         <div className="score-bar-track">
           <div
             className="score-bar-fill"
-            style={{ width: `${Math.round(result.confidence * 100)}%` }}
+            style={{ width: `${result.signal_confidence ?? Math.round(result.confidence * 100)}%` }}
           />
         </div>
+
+        {/* Signal breakdown */}
+        {result.confidence_signals && Object.keys(result.confidence_signals).length > 0 && (
+          <div className="signal-breakdown">
+            {SIGNAL_LABELS.map(({ key, label, max }) => {
+              const earned = result.confidence_signals[key] ?? 0
+              const passed = earned > 0
+              return (
+                <div key={key} className={`signal-row ${passed ? "signal-pass" : "signal-fail"}`}>
+                  <span className="signal-icon">{passed ? "✓" : "✗"}</span>
+                  <span className="signal-label">{label}</span>
+                  <span className="signal-pts">{earned}/{max}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
     </div>
   )
 }
+
+const SIGNAL_LABELS = [
+  { key: "providers_found",      label: "Providers found near you",   max: 25 },
+  { key: "insurance_recognized", label: "Insurance plan recognized",  max: 20 },
+  { key: "procedure_mapped",     label: "Procedure identified",       max: 20 },
+  { key: "network_checked",      label: "Network status confirmed",   max: 15 },
+  { key: "costs_calculated",     label: "Cost estimate calculated",   max: 10 },
+  { key: "urgency_set",          label: "Urgency level assessed",     max: 10 },
+]
