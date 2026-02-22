@@ -5,6 +5,7 @@
 
 "use client"
 
+import { useState } from "react"
 import { EstimateResult } from "../page"
 
 interface ResultsPanelProps {
@@ -22,6 +23,7 @@ export default function ResultsPanel({
   stepIndex,
   agentSteps,
 }: ResultsPanelProps) {
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   // Empty state — nothing submitted yet
   if (!isLoading && !result) {
@@ -141,10 +143,21 @@ export default function ResultsPanel({
       <div className="confidence-section">
         <div className="confidence-row">
           <span className="confidence-label">Data Confidence</span>
-          <span className="confidence-value">
-            {result.signal_confidence ?? Math.round(result.confidence * 100)}
-            <span className="confidence-max">/100</span>
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="confidence-value">
+              {result.signal_confidence ?? Math.round(result.confidence * 100)}
+              <span className="confidence-max">/100</span>
+            </span>
+            {result.confidence_signals && Object.keys(result.confidence_signals).length > 0 && (
+              <button
+                className="breakdown-toggle"
+                onClick={() => setShowBreakdown(v => !v)}
+                aria-expanded={showBreakdown}
+              >
+                {showBreakdown ? "Hide" : "Details"}
+              </button>
+            )}
+          </div>
         </div>
         <div className="score-bar-track">
           <div
@@ -153,8 +166,8 @@ export default function ResultsPanel({
           />
         </div>
 
-        {/* Signal breakdown */}
-        {result.confidence_signals && Object.keys(result.confidence_signals).length > 0 && (
+        {/* Signal breakdown — hidden until user expands */}
+        {showBreakdown && result.confidence_signals && (
           <div className="signal-breakdown">
             {SIGNAL_LABELS.map(({ key, label, max }) => {
               const earned = result.confidence_signals[key] ?? 0

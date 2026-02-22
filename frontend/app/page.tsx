@@ -56,15 +56,15 @@ export interface EstimateResult {
 export type InputMode = "text" | "voice" | "upload"
 
 const AGENT_STEPS = [
-  "Analyzing your symptoms...",
-  "Identifying recommended care...",
-  "Assessing severity...",
-  "Finding nearby providers...",
-  "Checking network status...",
-  "Estimating your costs...",
-  "Finding alternatives...",
-  "Generating your summary...",
-  "Running quality check...",
+  "Checking your insurance...",
+  "Reading your plan details...",
+  "Understanding your symptoms...",
+  "Assessing urgency & severity...",
+  "Finding providers near your zip code...",
+  "Verifying network status...",
+  "Calculating out-of-pocket costs...",
+  "Searching for cheaper alternatives...",
+  "Generating your personalized summary...",
 ]
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
