@@ -25,8 +25,10 @@ export default function InsuranceSavings({
   const patientCost   = yourCost ?? topHospital?.estimated_cost ?? 0
   const savings       = procedureCost > patientCost ? procedureCost - patientCost : 0
   const savingsPct    = procedureCost > 0 ? Math.round((savings / procedureCost) * 100) : 0
+  const hasSavings    = procedureCost > 0 && savings > 0
 
-  if (!procedureCost || !patientCost || savings <= 0) return null
+  // Need at least a patient cost to render anything
+  if (!patientCost) return null
 
   const planLabel = usedDefaults
     ? "Standard Medicare estimate"
@@ -35,26 +37,34 @@ export default function InsuranceSavings({
   return (
     <div className="card fade-in-up">
 
-      {/* Savings headline — same structure as ResultsPanel cost-section */}
+      {/* Savings headline */}
       <div className="cost-section">
         <div className="cost-top">
           <div>
-            <p className="cost-label">Your Insurance Saves You</p>
-            <div className="cost-amount">${savings.toLocaleString()}</div>
+            <p className="cost-label">
+              {hasSavings ? "Your Insurance Saves You" : "Your Out-of-Pocket Cost"}
+            </p>
+            <div className="cost-amount">
+              {hasSavings ? `$${savings.toLocaleString()}` : `$${patientCost.toLocaleString()}`}
+            </div>
             <p className="cost-explanation">{planLabel}</p>
           </div>
-          <div className="network-badge-wrap">
-            <span className="badge-in-network">-{savingsPct}%</span>
-          </div>
+          {hasSavings && (
+            <div className="network-badge-wrap">
+              <span className="badge-in-network">-{savingsPct}%</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Before / after breakdown — same .confidence-section + .alternative-row pattern */}
+      {/* Before / after breakdown */}
       <div className="confidence-section">
-        <div className="alternative-row">
-          <span className="alt-label">Full procedure cost</span>
-          <span className="alt-cost">${procedureCost.toLocaleString()}</span>
-        </div>
+        {hasSavings && (
+          <div className="alternative-row">
+            <span className="alt-label">Full procedure cost</span>
+            <span className="alt-cost">${procedureCost.toLocaleString()}</span>
+          </div>
+        )}
 
         <div className="alternative-row savings-yours-row">
           <span className="alt-label">Your out-of-pocket</span>

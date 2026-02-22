@@ -293,10 +293,16 @@ def node_find_hospitals(state: AgentState) -> dict:
                 return a
         return addresses[0] if addresses else {}
 
-    def _parse(results: list, strict_zip: bool = True) -> list:
+    zip4  = zip5[:4]   # same neighbourhood (~1–2 mile radius for most metro zips)
+    zip3  = zip5[:3]   # same metro area
+    # Derive expected state from the first valid result so Tier 4/5 can cross-check
+    _expected_state: list[str] = []
+
+    def _parse(results: list, prefix_len: int = 5) -> list:
         """Parse NPI results using the practice-location address.
-        When strict_zip=True, only keep providers whose registered zip matches
-        the user's zip exactly (first 5 digits) — no cross-zip contamination."""
+        Keep only providers whose zip starts with the first `prefix_len` digits
+        of the user's zip, preventing cross-city / cross-state contamination.
+        If _expected_state is populated, also enforce same state."""
         hospitals = []
         for p in results:
             basic = p.get("basic", {})
@@ -307,8 +313,13 @@ def node_find_hospitals(state: AgentState) -> dict:
             )
             if not name or name.strip() == "Dr.":
                 continue
-            provider_zip = addr.get("postal_code", "")[:5]
-            if strict_zip and provider_zip != zip5:
+            provider_zip   = addr.get("postal_code", "")[:5]
+            provider_state = addr.get("state", "").upper()
+            # Zip prefix filter (exact 5 → 4 → 3 digits depending on tier)
+            if not provider_zip.startswith(zip5[:prefix_len]):
+                continue
+            # State consistency: once we know the expected state, enforce it
+            if _expected_state and provider_state not in _expected_state:
                 continue
             hospitals.append({
                 "hospital":       name.strip(),
@@ -318,30 +329,42 @@ def node_find_hospitals(state: AgentState) -> dict:
                 "network_status": "unknown",
                 "estimated_cost": 0,
             })
+        # Capture state from first successful result for subsequent tiers
+        if hospitals and not _expected_state:
+            state = hospitals[0]["address"].split(",")[-1].strip().split(" ")[0]
+            if state:
+                _expected_state.append(state)
         return hospitals
 
     hospitals = []
-    # NPI API: postal_code is a prefix search — always filter results ourselves
+    # NPI API: postal_code is a prefix search — always post-filter ourselves
     base = {"version": "2.1", "postal_code": zip5, "limit": 20}
 
-    # Tier 1: organizations matching the specialty in this exact zip
+    # Tier 1: specialty organisations in exact zip
     if specialty != "hospital":
         results = _fetch({**base, "taxonomy_description": specialty, "entity_type_code": "2"})
-        hospitals = _parse(results, strict_zip=True)
+        hospitals = _parse(results, prefix_len=5)
 
-    # Tier 2: any organization in this exact zip
+    # Tier 2: any organisation in exact zip
     if not hospitals:
         results = _fetch({**base, "taxonomy_description": "hospital", "entity_type_code": "2"})
-        hospitals = _parse(results, strict_zip=True)
+        hospitals = _parse(results, prefix_len=5)
 
-    # Tier 3: any provider (individual or org) in this exact zip, no specialty filter
+    # Tier 3: any provider (individual or org) in exact zip
     if not hospitals:
         results = _fetch({**base})
-        hospitals = _parse(results, strict_zip=True)
+        hospitals = _parse(results, prefix_len=5)
 
-    # Tier 4: no broadening — if nothing is in this zip, return empty so the
-    # answer can honestly tell the user no in-zip providers were found.
-    # (Avoids showing providers from different zip codes / cities.)
+    # Tier 4: same 4-digit zip prefix (same neighbourhood, still very local)
+    if not hospitals:
+        results = _fetch({"version": "2.1", "postal_code": zip4, "limit": 20})
+        hospitals = _parse(results, prefix_len=4)
+
+    # Tier 5: same 3-digit zip prefix (same metro area) — state-checked to prevent
+    # cross-state mixing (e.g. TX 774xx vs OK 741xx)
+    if not hospitals:
+        results = _fetch({"version": "2.1", "postal_code": zip3, "limit": 20})
+        hospitals = _parse(results, prefix_len=3)
 
     return {"hospitals": hospitals}
 
