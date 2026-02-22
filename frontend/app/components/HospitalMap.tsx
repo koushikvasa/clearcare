@@ -230,7 +230,7 @@ export default function HospitalMap({ hospitals, zipCode }: HospitalMapProps) {
   return (
     <div className="map-container">
       <div className="map-header">
-        <h3 className="map-title">Nearby Providers</h3>
+        <h3 className="map-title">Provider Map</h3>
         <div className="map-legend">
           <div className="legend-item">
             <div className="legend-dot legend-dot--green" />

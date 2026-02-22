@@ -247,10 +247,14 @@ export default function Page() {
       />
 
       <main className="main-content">
+        {/*
+          Flat grid — mobile stacks in HTML order (user's preferred order).
+          Desktop: input pinned left, all results in right column via CSS grid.
+        */}
         <div className="main-grid">
 
-          {/* Left column */}
-          <div className="left-column">
+          {/* 1 — Input (left on desktop, always first on mobile) */}
+          <div className="grid-input">
             <InputPanel
               inputMode={inputMode}
               setInputMode={setInputMode}
@@ -266,26 +270,10 @@ export default function Page() {
               onUploadResult={handleUploadResult}
               error={error}
             />
-
-            {result && (
-              <AIAnalysis
-                spokenSummary={result.spoken_summary}
-                nextStep={result.next_step}
-                usedDefaults={result.used_defaults}
-                symptomReason={result.symptom_reason}
-                urgency={result.urgency}
-              />
-            )}
-
-            {result &&  (
-              <div className="fade-in-up">
-                <HospitalCards hospitals={result.hospitals} />
-              </div>
-            )}
           </div>
 
-          {/* Right column */}
-          <div className="right-column">
+          {/* 2 — Cost estimate (right col row 1 on desktop) */}
+          <div className="grid-results">
             <ResultsPanel
               result={result}
               isLoading={isLoading}
@@ -293,26 +281,50 @@ export default function Page() {
               stepIndex={stepIndex}
               agentSteps={AGENT_STEPS}
             />
+          </div>
 
-            {result && (
+          {/* 3 — Insurance savings (right col row 2 on desktop) */}
+          {result && (
+            <div className="grid-savings fade-in-up">
               <InsuranceSavings
                 hospitals={result.hospitals || []}
                 yourCost={result.in_network_cost}
                 planName={result.insurance_plan || "Your Plan"}
                 usedDefaults={result.used_defaults ?? false}
               />
-            )}
+            </div>
+          )}
 
-            {result && (
-              <div className="fade-in-up">
-                <HospitalMap 
-  key={result ? "loaded" : "empty"}
-  hospitals={result.hospitals || []} 
-  zipCode={zipCode} 
-/>
-              </div>
-            )}
-          </div>
+          {/* 4 — AI summary (right col row 3 on desktop) */}
+          {result && (
+            <div className="grid-ai fade-in-up">
+              <AIAnalysis
+                spokenSummary={result.spoken_summary}
+                nextStep={result.next_step}
+                usedDefaults={result.used_defaults}
+                symptomReason={result.symptom_reason}
+                urgency={result.urgency}
+              />
+            </div>
+          )}
+
+          {/* 5 — Provider cards (right col row 4 on desktop) */}
+          {result && (
+            <div className="grid-cards fade-in-up">
+              <HospitalCards hospitals={result.hospitals} />
+            </div>
+          )}
+
+          {/* 6 — Map (right col row 5 on desktop) */}
+          {result && (
+            <div className="grid-map fade-in-up">
+              <HospitalMap
+                key={result ? "loaded" : "empty"}
+                hospitals={result.hospitals || []}
+                zipCode={zipCode}
+              />
+            </div>
+          )}
 
         </div>
       </main>

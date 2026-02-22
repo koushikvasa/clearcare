@@ -170,9 +170,20 @@ button { font-family: var(--font-body); }
   padding:   16px;
 }
 
-.main-grid      { display: flex; flex-direction: column; gap: 16px; }
-.left-column    { display: flex; flex-direction: column; gap: 16px; width: 100%; }
-.right-column   { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+/* ── Page grid — mobile: flex column in HTML order ───────────────────────── */
+.main-grid {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+}
+
+/* Mobile explicit order matches the user's desired sequence */
+.grid-input   { order: 1; }
+.grid-results { order: 2; }
+.grid-savings { order: 3; }
+.grid-ai      { order: 4; }
+.grid-cards   { order: 5; }
+.grid-map     { order: 6; }
 
 @media (min-width: 640px) {
   .main-content { padding: 20px; }
@@ -180,15 +191,27 @@ button { font-family: var(--font-body); }
 }
 
 @media (min-width: 1024px) {
-  .main-content {
-    padding: 28px 32px;
-  }
+  .main-content { padding: 24px 32px; }
+
+  /* Desktop: CSS Grid — input pinned left, all results stacked in right col */
   .main-grid {
     display:               grid;
-    grid-template-columns: 380px 1fr;
-    gap:                   24px;
+    grid-template-columns: 360px 1fr;
+    grid-template-rows:    auto;
+    column-gap:            24px;
+    row-gap:               20px;
     align-items:           start;
   }
+
+  /* Left column — input only, pinned to row 1 */
+  .grid-input   { grid-column: 1; grid-row: 1; align-self: start; order: unset; }
+
+  /* Right column — all results stacked */
+  .grid-results { grid-column: 2; grid-row: 1; order: unset; }
+  .grid-savings { grid-column: 2; grid-row: 2; order: unset; }
+  .grid-ai      { grid-column: 2; grid-row: 3; order: unset; }
+  .grid-cards   { grid-column: 2; grid-row: 4; order: unset; }
+  .grid-map     { grid-column: 2; grid-row: 5; order: unset; }
 }
 
 /* ── Header ─────────────────────────────────────── */
