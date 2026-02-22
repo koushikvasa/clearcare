@@ -218,14 +218,16 @@ THIS IS REWRITE ATTEMPT {iteration} of {MAX_ITERATIONS}.
 REWRITE RULES:
 - Focus on fixing the weakest dimension specifically
 - Keep what was already scoring well
-- spoken_summary must be under 120 words
-- spoken_summary will be read aloud by a voice assistant
-  to a Medicare patient, so write in plain conversational English
+- spoken_summary must be under 120 words and follow this order:
+    1. What the symptoms suggest and why this procedure (if symptom_reason available)
+    2. Specific cost at the named hospital (never "a nearby provider")
+    3. Cheaper alternative if one exists
+    4. Urgency note only if urgent or soon
+    5. Default disclaimer only if used_defaults is True
+- spoken_summary will be read aloud — write in plain conversational English
 - Always state costs as estimates, not guarantees
-- Always end with one specific, actionable next step
-- If used_defaults is True, mention that real plan details
-  would improve accuracy
-- Do not use medical jargon without explaining it
+- next_step must name the specific hospital and phone number, one sentence
+- Do not use medical jargon without explaining it in plain English
 
 Return the same JSON structure as before.
 Return valid JSON only. No markdown fences. No explanation.

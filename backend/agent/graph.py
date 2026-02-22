@@ -542,22 +542,40 @@ def node_generate_answer(state: AgentState) -> dict:
     cheapest_in  = in_network[0]  if in_network  else None
     cheapest_out = out_network[0] if out_network else None
 
+    cheapest_in_phone  = (cheapest_in  or {}).get("phone", "N/A")
+    cheapest_out_phone = (cheapest_out or {}).get("phone", "N/A")
+    top_hospital_name  = (cheapest_in or (hospitals[0] if hospitals else {})).get("hospital", "")
+    top_hospital_phone = (cheapest_in or (hospitals[0] if hospitals else {})).get("phone", "N/A")
+    plan_name_str      = plan_details.get("plan_name", "Original Medicare")
+
+    # Build a concrete next_step template so the LLM doesn't fall back to "call your doctor"
+    if top_hospital_phone and top_hospital_phone != "N/A":
+        next_step_template = (
+            f"Call {top_hospital_name} at {top_hospital_phone} to schedule a {care}. "
+            f"Let them know you have {plan_name_str} so they can confirm coverage before you come in."
+        )
+    else:
+        next_step_template = (
+            f"Contact {top_hospital_name} to schedule a {care} "
+            f"and confirm they accept {plan_name_str} before booking."
+        )
+
     context = f"""
 Patient symptoms/description: {state.get("care_needed", "")}
 Identified procedure: {care}
 Symptom analysis: {symptom_reason}
 Urgency: {urgency}
-Insurance plan: {plan_details.get("plan_name", "Original Medicare")}
+Insurance plan: {plan_name_str}
 Plan type: {plan_details.get("plan_type", "unknown")}
 Deductible: ${plan_details.get("deductible", "unknown")}
 Out-of-pocket max: ${plan_details.get("out_of_pocket_max", "no limit")}
 Using default values: {is_default}
 
 CHEAPEST COVERED OPTION:
-{f"{cheapest_in['hospital']}: ${cheapest_in['estimated_cost']}" if cheapest_in else "None found"}
+{f"{cheapest_in['hospital']} | phone: {cheapest_in_phone} | cost: ${cheapest_in['estimated_cost']}" if cheapest_in else "None found"}
 
 CHEAPEST OUT-OF-NETWORK:
-{f"{cheapest_out['hospital']}: ${cheapest_out['estimated_cost']}" if cheapest_out else "None found"}
+{f"{cheapest_out['hospital']} | phone: {cheapest_out_phone} | cost: ${cheapest_out['estimated_cost']}" if cheapest_out else "None found"}
 
 ALL OPTIONS:
 {json.dumps(hospitals, indent=2)}
@@ -565,16 +583,8 @@ ALL OPTIONS:
 CHEAPER ALTERNATIVES:
 {alternatives}
 
-INSTRUCTIONS FOR spoken_summary:
-1. Start by explaining what the patient's symptoms suggest and why this procedure is recommended.
-   Example: "Based on your symptoms, [symptom_reason]. This means you likely need a [care_needed]."
-2. Then give the cost estimate clearly.
-3. Mention the cheapest nearby provider.
-4. End with one specific next step.
-5. Keep it under 130 words, plain English, conversational — it will be read aloud.
-
-IMPORTANT: If is_default is True, end with:
-"These estimates use standard Medicare rates. Share your insurance details for a more accurate cost."
+REQUIRED NEXT STEP (use this exactly, only improve the wording slightly if needed):
+{next_step_template}
 """
 
     try:
