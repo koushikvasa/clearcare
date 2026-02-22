@@ -46,69 +46,59 @@ export default function HospitalCards({ hospitals }: HospitalCardsProps) {
         <span className="cards-count">{hospitals.length} found</span>
       </div>
 
-      {/* Top recommendation */}
-      <div className="hospital-card hospital-card--top">
-        <div className="card-top-label">Closest Provider</div>
-        <div className="card-body">
-          <div className="card-info">
-            <p className="card-name">{top.hospital}</p>
-            <p className="card-address">{top.address}</p>
-            <NetworkBadge status={top.network_status} />
-          </div>
-          <div className="card-right">
-            <p className="card-cost-label">Est. Out-of-Pocket</p>
-            <p className="card-cost">
-              {top.estimated_cost > 0
-                ? "$" + top.estimated_cost.toLocaleString()
-                : "—"}
-            </p>
-            {top.cost_breakdown && (
-              <p className="card-cost-breakdown">{top.cost_breakdown}</p>
-            )}
-            {top.phone && top.phone !== "N/A" && (
-              <a
-                href={"tel:" + top.phone}
-                className="card-call-btn"
-              >
-                Call
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Horizontal card grid */}
+      <div className="cards-grid">
 
-      {/* Remaining hospitals */}
-      {rest.map((hospital, i) => (
-        <div key={i} className="hospital-card">
+        {/* Top recommendation */}
+        <div className="hospital-card hospital-card--top">
+          <div className="card-top-label">Closest Provider</div>
           <div className="card-body">
             <div className="card-info">
-              <p className="card-name">{hospital.hospital}</p>
-              <p className="card-address">{hospital.address}</p>
-              <NetworkBadge status={hospital.network_status} />
+              <p className="card-name">{top.hospital}</p>
+              <p className="card-address">{top.address}</p>
+              <NetworkBadge status={top.network_status} />
             </div>
             <div className="card-right">
               <p className="card-cost-label">Est. Out-of-Pocket</p>
               <p className="card-cost">
-                {hospital.estimated_cost > 0
-                  ? "$" + hospital.estimated_cost.toLocaleString()
-                  : "—"}
+                {top.estimated_cost > 0 ? "$" + top.estimated_cost.toLocaleString() : "—"}
               </p>
-              {hospital.cost_breakdown && (
-                <p className="card-cost-breakdown">{hospital.cost_breakdown}</p>
+              {top.cost_breakdown && (
+                <p className="card-cost-breakdown">{top.cost_breakdown}</p>
               )}
-              {hospital.phone && hospital.phone !== "N/A" && (
-                <a
-                  href={`tel:${hospital.phone}`}
-                  className="card-call-btn card-call-btn--secondary"
-                >
-                  Call
-                </a>
+              {top.phone && top.phone !== "N/A" && (
+                <a href={"tel:" + top.phone} className="card-call-btn">Call</a>
               )}
             </div>
           </div>
         </div>
-      ))}
 
+        {/* Remaining hospitals */}
+        {rest.map((hospital, i) => (
+          <div key={i} className="hospital-card">
+            <div className="card-body">
+              <div className="card-info">
+                <p className="card-name">{hospital.hospital}</p>
+                <p className="card-address">{hospital.address}</p>
+                <NetworkBadge status={hospital.network_status} />
+              </div>
+              <div className="card-right">
+                <p className="card-cost-label">Est. Out-of-Pocket</p>
+                <p className="card-cost">
+                  {hospital.estimated_cost > 0 ? "$" + hospital.estimated_cost.toLocaleString() : "—"}
+                </p>
+                {hospital.cost_breakdown && (
+                  <p className="card-cost-breakdown">{hospital.cost_breakdown}</p>
+                )}
+                {hospital.phone && hospital.phone !== "N/A" && (
+                  <a href={`tel:${hospital.phone}`} className="card-call-btn card-call-btn--secondary">Call</a>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+
+      </div>
     </div>
   )
 }

@@ -464,11 +464,29 @@ button { font-family: var(--font-body); }
 .popup-cost     { font-weight: 700; font-size: 15px; color: var(--text-primary); }
 .popup-phone    { display: block; margin-top: 8px; font-size: 12px; color: var(--teal); font-weight: 600; text-decoration: none; }
 
+/* ── Providers full-width section (below both columns) ───────────── */
+.providers-section {
+  margin-top: 4px;
+}
+
 /* ── Hospital Cards ──────────────────────────────── */
 .hospital-cards {
   display:        flex;
   flex-direction: column;
-  gap:            10px;
+  gap:            12px;
+}
+
+/* Cards arranged horizontally — 1 col on mobile, auto-fill on desktop */
+.cards-grid {
+  display:               grid;
+  grid-template-columns: 1fr;
+  gap:                   12px;
+}
+
+@media (min-width: 640px) {
+  .cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
 }
 
 .cards-header {

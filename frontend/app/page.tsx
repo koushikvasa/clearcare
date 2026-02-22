@@ -91,7 +91,6 @@ export default function Page() {
 
   const [inputMode,      setInputMode]      = useState<InputMode>("text")
   const [insuranceInput, setInsuranceInput] = useState("")   // full text sent to backend
-  const [insuranceDisplay, setInsuranceDisplay] = useState("") // short label shown in UI
   const [careNeeded,     setCareNeeded]     = useState("")
   const [zipCode,        setZipCode]        = useState("")
   const [medicalHistory, setMedicalHistory] = useState("")
@@ -218,8 +217,7 @@ export default function Page() {
   }, [API_URL])
 
   const handleUploadResult = useCallback((extractedText: string) => {
-    setInsuranceInput(extractedText)                // full text → backend
-    setInsuranceDisplay(parsePlanLabel(extractedText)) // short name → UI
+    setInsuranceInput(extractedText)   // full text → backend; UI derives display label inline
   }, [])
 
   const handleClearData = useCallback(async () => {
@@ -227,7 +225,6 @@ export default function Page() {
     await fetch(`${API_URL}/api/estimate/session/${sessionId}`, { method: "DELETE" })
     localStorage.removeItem("clearcare_session_id")
     setInsuranceInput("")
-    setInsuranceDisplay("")
     setZipCode("")
     setResult(null)
     setIsReturning(false)
@@ -254,8 +251,8 @@ export default function Page() {
             <InputPanel
               inputMode={inputMode}
               setInputMode={setInputMode}
-              insuranceInput={insuranceDisplay || insuranceInput}
-              setInsuranceInput={(val) => { setInsuranceInput(val); setInsuranceDisplay(val) }}
+              insuranceInput={insuranceInput.includes("===") ? parsePlanLabel(insuranceInput) : insuranceInput}
+              setInsuranceInput={setInsuranceInput}
               careNeeded={careNeeded}
               setCareNeeded={setCareNeeded}
               zipCode={zipCode}
@@ -278,7 +275,7 @@ export default function Page() {
             )}
           </div>
 
-          {/* Right column — cost, savings, providers, map */}
+          {/* Right column — cost, savings, map */}
           <div className="right-column">
             <ResultsPanel
               result={result}
@@ -299,12 +296,6 @@ export default function Page() {
 
             {result && (
               <div className="fade-in-up">
-                <HospitalCards hospitals={result.hospitals} />
-              </div>
-            )}
-
-            {result && (
-              <div className="fade-in-up">
                 <HospitalMap
                   key={result ? "loaded" : "empty"}
                   hospitals={result.hospitals || []}
@@ -315,6 +306,14 @@ export default function Page() {
           </div>
 
         </div>
+
+        {/* Providers — full width below both columns, cards arranged horizontally */}
+        {result && (
+          <div className="providers-section fade-in-up">
+            <HospitalCards hospitals={result.hospitals} />
+          </div>
+        )}
+
       </main>
 
       <Footer/>
