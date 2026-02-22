@@ -20,6 +20,18 @@ interface InsuranceUploadProps {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+
+function parsePlanLabel(text: string): string {
+  const planMatch    = text.match(/Plan Name:\s*(.+?)(?:\n|$)/i)
+  const companyMatch = text.match(/Insurance Company:\s*(.+?)(?:\n|$)/i)
+  const plan         = planMatch?.[1]?.trim()
+  const company      = companyMatch?.[1]?.trim()
+  if (plan && company) return `${plan} — ${company}`
+  if (plan)            return plan
+  if (company)         return company
+  const firstLine = text.split("\n").find(l => l.trim() && !l.includes("==="))
+  return firstLine?.trim() ?? "Insurance plan detected"
+}
 const MAX_SIZE_MB   = 10
 
 export default function InsuranceUpload({
@@ -175,15 +187,11 @@ export default function InsuranceUpload({
         </div>
       )}
 
-      {/* Extracted plan details */}
+      {/* Extracted plan details — show a clean human-readable label, not raw text */}
       {extracted && (
         <div className="extracted-box">
           <p className="extracted-label">Plan Detected</p>
-          <p className="extracted-text">
-            {extracted.length > 200
-              ? extracted.slice(0, 200) + "..."
-              : extracted}
-          </p>
+          <p className="extracted-text">{parsePlanLabel(extracted)}</p>
         </div>
       )}
 

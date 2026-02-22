@@ -55,6 +55,24 @@ export interface EstimateResult {
 
 export type InputMode = "text" | "voice" | "upload"
 
+/** Extract a short human-readable label from raw plan-card text.
+ *  e.g. "=== EXTRACTED PLAN DETAILS ===\nPlan Name: Open Choice PPO\nInsurance Company: Aetna..."
+ *  → "Open Choice PPO — Aetna Life Insurance Company"
+ */
+function parsePlanLabel(text: string): string {
+  if (!text) return ""
+  const planMatch    = text.match(/Plan Name:\s*(.+?)(?:\n|$)/i)
+  const companyMatch = text.match(/Insurance Company:\s*(.+?)(?:\n|$)/i)
+  const plan         = planMatch?.[1]?.trim()
+  const company      = companyMatch?.[1]?.trim()
+  if (plan && company) return `${plan} — ${company}`
+  if (plan)            return plan
+  if (company)         return company
+  // Fallback: first non-empty, non-header line
+  const firstLine = text.split("\n").find(l => l.trim() && !l.includes("==="))
+  return firstLine?.trim() ?? "Uploaded plan"
+}
+
 const AGENT_STEPS = [
   "Checking your insurance...",
   "Reading your plan details...",
@@ -72,7 +90,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 export default function Page() {
 
   const [inputMode,      setInputMode]      = useState<InputMode>("text")
-  const [insuranceInput, setInsuranceInput] = useState("")
+  const [insuranceInput, setInsuranceInput] = useState("")   // full text sent to backend
+  const [insuranceDisplay, setInsuranceDisplay] = useState("") // short label shown in UI
   const [careNeeded,     setCareNeeded]     = useState("")
   const [zipCode,        setZipCode]        = useState("")
   const [medicalHistory, setMedicalHistory] = useState("")
@@ -199,7 +218,8 @@ export default function Page() {
   }, [API_URL])
 
   const handleUploadResult = useCallback((extractedText: string) => {
-    setInsuranceInput(extractedText)
+    setInsuranceInput(extractedText)                // full text → backend
+    setInsuranceDisplay(parsePlanLabel(extractedText)) // short name → UI
   }, [])
 
   const handleClearData = useCallback(async () => {
@@ -207,6 +227,7 @@ export default function Page() {
     await fetch(`${API_URL}/api/estimate/session/${sessionId}`, { method: "DELETE" })
     localStorage.removeItem("clearcare_session_id")
     setInsuranceInput("")
+    setInsuranceDisplay("")
     setZipCode("")
     setResult(null)
     setIsReturning(false)
@@ -233,8 +254,8 @@ export default function Page() {
             <InputPanel
               inputMode={inputMode}
               setInputMode={setInputMode}
-              insuranceInput={insuranceInput}
-              setInsuranceInput={setInsuranceInput}
+              insuranceInput={insuranceDisplay || insuranceInput}
+              setInsuranceInput={(val) => { setInsuranceInput(val); setInsuranceDisplay(val) }}
               careNeeded={careNeeded}
               setCareNeeded={setCareNeeded}
               zipCode={zipCode}
