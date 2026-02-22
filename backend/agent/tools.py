@@ -221,13 +221,17 @@ def estimate_cost(
     insurance_plan: str,
     network_status: str,
     severity: str = "moderate",
-    deductible_met: bool = False
+    deductible_met: bool = False,
+    deductible: float = 240,
+    coinsurance: float = 20,
+    copay: float = 0,
 ) -> str:
     """
     Estimate the patient's out-of-pocket cost for a medical procedure.
     Uses CMS Medicare benchmark pricing and standard cost-sharing rules.
     Input: procedure name, insurance_plan, network_status (in-network/out-of-network),
-           severity (mild/moderate/severe/critical), deductible_met (true/false)
+           severity (mild/moderate/severe/critical), deductible_met (true/false),
+           deductible (annual deductible in $), coinsurance (% patient pays), copay ($)
     Returns: estimated cost breakdown with in-network, out-of-network, and alternative costs.
     """
 
@@ -280,41 +284,39 @@ def estimate_cost(
     adjusted_cost = base_cost * multiplier
 
     # ── Step 3: Apply insurance cost-sharing rules ─────
+    # Use the patient's actual plan values (deductible, coinsurance, copay)
+    # passed in from their insurance card / plan details.
     plan_lower = insurance_plan.lower()
+    coinsurance_rate = coinsurance / 100.0   # convert % to decimal
 
-    if "medicare" in plan_lower and "advantage" not in plan_lower:
-        # Original Medicare (Part A/B) rules:
-        # Part B covers 80% after the annual deductible ($240 in 2024)
-        # Patient pays 20% coinsurance
-        if network_status == "in-network":
-            if deductible_met:
-                patient_cost = adjusted_cost * 0.20
-            else:
-                # Apply deductible first, then 20% on the rest
-                deductible = 240
-                if adjusted_cost <= deductible:
-                    patient_cost = adjusted_cost
-                else:
-                    patient_cost = deductible + (adjusted_cost - deductible) * 0.20
+    if network_status in ("in-network", "accepts-medicare"):
+        if deductible_met:
+            patient_cost = max(copay, adjusted_cost * coinsurance_rate)
         else:
-            # Original Medicare has no network — but some providers
-            # don't accept assignment, costing patients more
-            patient_cost = adjusted_cost * 0.35
-
+            if adjusted_cost <= deductible:
+                patient_cost = adjusted_cost
+            else:
+                patient_cost = deductible + (adjusted_cost - deductible) * coinsurance_rate
+            patient_cost = max(patient_cost, copay)
     else:
-        # Medicare Advantage or commercial plan
-        # These have copays and coinsurance that vary by plan
-        if network_status == "in-network":
-            if deductible_met:
-                patient_cost = adjusted_cost * 0.20
-            else:
-                # Typical MA plan: copay + coinsurance
-                copay = 40 if adjusted_cost < 500 else 0
-                patient_cost = copay + (adjusted_cost * 0.25)
+        # Out-of-network — patient typically pays 40-55% regardless of plan type
+        # Original Medicare has no network but some providers charge excess fees
+        if "medicare" in plan_lower and "advantage" not in plan_lower:
+            patient_cost = adjusted_cost * 0.35
         else:
-            # Out-of-network with MA = very expensive
-            # Typically 40-50% of total cost or full cost
             patient_cost = adjusted_cost * 0.50
+
+    # Build breakdown string for the UI
+    if deductible_met:
+        breakdown = f"{coinsurance:.0f}% coinsurance = ${patient_cost:,.0f}"
+    elif adjusted_cost > deductible:
+        remainder = adjusted_cost - deductible
+        breakdown = (
+            f"${deductible:,.0f} deductible + "
+            f"{coinsurance:.0f}% of remaining ${remainder:,.0f} = ${patient_cost:,.0f}"
+        )
+    else:
+        breakdown = f"Under deductible — full cost ${patient_cost:,.0f}"
 
     # ── Step 4: Calculate alternative (cheaper option) ─
     # Outpatient facilities charge 30-40% less than hospitals
@@ -338,6 +340,7 @@ def estimate_cost(
         f"Base Medicare cost: ${base_cost:,.0f}\n"
         f"Severity-adjusted cost: ${adjusted_cost:,.0f}\n"
         f"Your estimated cost: ${patient_cost:,.0f}\n"
+        f"Cost breakdown: {breakdown}\n"
         f"Alternative option: ${alternative_cost:,.0f} ({alternative_note})\n\n"
         f"⚠️ These are estimates based on CMS benchmark data. "
         f"Actual costs vary by provider. Always verify before scheduling."

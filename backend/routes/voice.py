@@ -153,30 +153,39 @@ async def classify_voice(request: ClassifyRequest):
     classify_prompt = """
 You are extracting structured fields from a voice input for a Medicare cost estimator.
 
-The user spoke one sentence describing what they need. Extract these fields:
-- insurance_input: the insurance plan name if mentioned (e.g. "Humana Gold Plus HMO")
-- care_needed: the medical procedure or care they need (e.g. "knee MRI", "colonoscopy")
+The user spoke naturally — they may describe symptoms, name a procedure, mention their insurance plan, or all of the above.
+
+Extract these fields:
+- insurance_input: the insurance plan name if mentioned (e.g. "Humana Gold Plus HMO", "Aetna Medicare Advantage")
+- care_needed: EITHER a specific procedure name OR a description of symptoms — whichever the user said. This is the most important field. Capture the full description of what the user is experiencing or needs, even if it is symptoms rather than a named procedure.
 - zip_code: 5-digit zip code if mentioned
 
 RULES:
-- Only extract what was explicitly said
-- If a field was not mentioned return null
-- care_needed is the most important field — always try to extract it
-- Return valid JSON only
+- care_needed should capture symptoms like "my knee has been hurting for 3 weeks" just as well as procedures like "knee MRI"
+- If the user describes symptoms AND names a procedure, put the symptom description in care_needed (the backend will identify the procedure)
+- If the user mentions their insurance AND symptoms/care, separate them correctly
+- Only return null for a field if the user truly did not mention anything related to it
+- Return valid JSON only, no markdown
 
 EXAMPLES:
 
 Input: "I need a knee MRI with my Humana Gold Plus plan in zip 11201"
 Output: {"insurance_input": "Humana Gold Plus", "care_needed": "knee MRI", "zip_code": "11201"}
 
-Input: "colonoscopy near Brooklyn"
-Output: {"insurance_input": null, "care_needed": "colonoscopy", "zip_code": null}
+Input: "my knee has been hurting for 3 weeks, hard to walk up stairs"
+Output: {"insurance_input": null, "care_needed": "my knee has been hurting for 3 weeks, hard to walk up stairs", "zip_code": null}
 
-Input: "I have Aetna Medicare Advantage"
-Output: {"insurance_input": "Aetna Medicare Advantage", "care_needed": null, "zip_code": null}
+Input: "I have Aetna Medicare Advantage and I've been having chest pain when I exercise"
+Output: {"insurance_input": "Aetna Medicare Advantage", "care_needed": "chest pain when exercising", "zip_code": null}
 
-Input: "annual physical zip code 10001"
-Output: {"insurance_input": null, "care_needed": "annual physical", "zip_code": "10001"}
+Input: "colonoscopy near Brooklyn zip 11201"
+Output: {"insurance_input": null, "care_needed": "colonoscopy", "zip_code": "11201"}
+
+Input: "I have Humana Gold Plus, my zip is 10001, and I have been having trouble breathing"
+Output: {"insurance_input": "Humana Gold Plus", "care_needed": "trouble breathing", "zip_code": "10001"}
+
+Input: "annual physical"
+Output: {"insurance_input": null, "care_needed": "annual physical", "zip_code": null}
 """
 
     try:

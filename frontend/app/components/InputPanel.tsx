@@ -144,6 +144,7 @@ export default function InputPanel({
             onSubmit={onSubmit}
             insuranceInput={insuranceInput}
             careNeeded={careNeeded}
+            setCareNeeded={setCareNeeded}
             zipCode={zipCode}
             setZipCode={setZipCode}
           />

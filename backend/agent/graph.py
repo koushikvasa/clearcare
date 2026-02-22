@@ -274,42 +274,57 @@ def node_find_hospitals(state: AgentState) -> dict:
             specialty = spec
             break
 
-    try:
-        params = {
-            "version":              "2.1",
-            "postal_code":          zip_code,
-            "taxonomy_description": specialty,
-            "entity_type_code":     "2",
-            "limit":                8,
-        }
-        response = httpx.get(NPI_REGISTRY_URL, params=params, timeout=10)
-        response.raise_for_status()
-        results = response.json().get("results", [])
+    def _fetch(params: dict) -> list:
+        try:
+            r = httpx.get(NPI_REGISTRY_URL, params=params, timeout=10)
+            r.raise_for_status()
+            return r.json().get("results", [])
+        except Exception:
+            return []
 
-        if not results:
-            params["taxonomy_description"] = "hospital"
-            response = httpx.get(NPI_REGISTRY_URL, params=params, timeout=10)
-            results  = response.json().get("results", [])
-
+    def _parse(results: list) -> list:
         hospitals = []
         for p in results:
             basic = p.get("basic", {})
             addr  = (p.get("addresses") or [{}])[0]
-            name  = basic.get("organization_name", "").strip()
-            if not name:
+            name  = (
+                basic.get("organization_name") or
+                f"Dr. {basic.get('first_name','')} {basic.get('last_name','')}".strip()
+            )
+            if not name or name.strip() == "Dr.":
                 continue
             hospitals.append({
-                "hospital":       name,
-                "address":        f"{addr.get('address_1','')}, {addr.get('city','')}, {addr.get('state','')} {addr.get('postal_code','')}",
+                "hospital":       name.strip(),
+                "address":        f"{addr.get('address_1','')}, {addr.get('city','')}, {addr.get('state','')} {addr.get('postal_code','')}".strip(", "),
                 "phone":          addr.get("telephone_number", "N/A"),
                 "npi":            p.get("number", ""),
                 "network_status": "unknown",
                 "estimated_cost": 0,
             })
+        return hospitals
 
-    except Exception as e:
-        print(f"ERROR node_find_hospitals: {e}")
-        hospitals = []
+    hospitals = []
+    base = {"version": "2.1", "postal_code": zip_code, "limit": 8}
+
+    # Tier 1: organizations matching the specialty
+    if specialty != "hospital":
+        results = _fetch({**base, "taxonomy_description": specialty, "entity_type_code": "2"})
+        hospitals = _parse(results)
+
+    # Tier 2: any organization (hospital) in this zip
+    if not hospitals:
+        results = _fetch({**base, "taxonomy_description": "hospital", "entity_type_code": "2"})
+        hospitals = _parse(results)
+
+    # Tier 3: any provider (individual or org) in this zip, no specialty filter
+    if not hospitals:
+        results = _fetch({**base})
+        hospitals = _parse(results)
+
+    # Tier 4: try a broader 3-digit zip prefix area
+    if not hospitals and len(zip_code) >= 3:
+        results = _fetch({"version": "2.1", "postal_code": zip_code[:3], "limit": 5})
+        hospitals = _parse(results)
 
     return {"hospitals": hospitals}
 
@@ -373,15 +388,17 @@ def node_estimate_cost(state: AgentState) -> dict:
                 "insurance_plan": plan_name,
                 "network_status": hospital["status"],
                 "severity":       severity,
-                "deductible":     plan_details.get("deductible", 240),
-                "coinsurance":    plan_details.get("coinsurance", 20),
-                "copay":          plan_details.get("copay_specialist", 0),
-                "deductible_met": False
+                "deductible":     float(plan_details.get("deductible") or 240),
+                "coinsurance":    float(plan_details.get("coinsurance") or 20),
+                "copay":          float(plan_details.get("copay_specialist") or 0),
+                "deductible_met": False,
             })
-            cost = parse_dollar(result, "Your estimated cost:")
+            cost      = parse_dollar(result, "Your estimated cost:")
+            breakdown = parse_field(result, "Cost breakdown:")
         except Exception as e:
             print(f"ERROR estimate_cost for {name}: {e}")
-            cost = 0
+            cost      = 0
+            breakdown = ""
 
         cost_results.append({
             "hospital":       name,
@@ -389,6 +406,7 @@ def node_estimate_cost(state: AgentState) -> dict:
             "phone":          hospital.get("phone", "N/A"),
             "network_status": hospital["status"],
             "estimated_cost": cost,
+            "cost_breakdown": breakdown,
         })
 
     cost_results.sort(key=lambda x: x["estimated_cost"] if x["estimated_cost"] > 0 else 9999)

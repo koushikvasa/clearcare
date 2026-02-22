@@ -72,9 +72,13 @@ export default function ResultsPanel({
   // Result state
   if (!result) return null
 
-  const networkStatus = result.hospitals?.[0]?.network_status || "unknown"
+  const topHospital   = result.hospitals?.[0]
+  const networkStatus = topHospital?.network_status || "unknown"
   const inNetwork     = networkStatus === "in-network"
   const acceptsMed    = networkStatus === "accepts-medicare"
+
+  const displayCost = result.in_network_cost ?? result.out_of_network_cost
+  const breakdown   = topHospital?.cost_breakdown || null
 
   return (
     <div className="card results-panel fade-in-up">
@@ -83,14 +87,15 @@ export default function ResultsPanel({
       <div className="cost-section">
         <div className="cost-top">
           <div>
-            <p className="cost-label">Estimated Cost</p>
+            <p className="cost-label">Your Out-of-Pocket Cost</p>
             <div className="cost-amount">
-            {result.in_network_cost
-                ? "$" + result.in_network_cost.toLocaleString()
-                : result.alternative_cost
-                ? "$" + result.alternative_cost.toLocaleString()
-                : "See below"}
+              {displayCost != null && displayCost > 0
+                ? "$" + displayCost.toLocaleString()
+                : "See providers below"}
             </div>
+            {breakdown && (
+              <p className="cost-breakdown-line">{breakdown}</p>
+            )}
             <p className="cost-explanation">{result.headline}</p>
           </div>
 
@@ -102,11 +107,24 @@ export default function ResultsPanel({
             {acceptsMed && (
               <span className="badge-in-network">Accepts Medicare</span>
             )}
-            {!inNetwork && !acceptsMed && (
+            {!inNetwork && !acceptsMed && networkStatus !== "unknown" && (
+              <span className="badge-out-network">Out of Network</span>
+            )}
+            {networkStatus === "unknown" && (
               <span className="badge-unknown">Network Unknown</span>
             )}
           </div>
         </div>
+
+        {/* Out-of-network cost if different from display cost */}
+        {result.out_of_network_cost && result.out_of_network_cost !== displayCost && (
+          <div className="alternative-row">
+            <span className="alt-label">Out-of-network cost</span>
+            <span className="alt-cost">
+              ${result.out_of_network_cost.toLocaleString()}
+            </span>
+          </div>
+        )}
 
         {/* Alternative cost if available */}
         {result.alternative_cost && (

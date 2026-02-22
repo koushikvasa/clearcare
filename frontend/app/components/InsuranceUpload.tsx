@@ -192,13 +192,13 @@ export default function InsuranceUpload({
         <div className="input-error">{error}</div>
       )}
 
-      {/* Care needed */}
+      {/* Symptoms */}
       <div className="field-group">
-        <label className="input-label">Care Needed</label>
+        <label className="input-label">Describe Your Symptoms</label>
         <input
           type="text"
           className="input-field"
-          placeholder="e.g. knee MRI, colonoscopy, annual physical"
+          placeholder="e.g. my knee has been hurting for 3 weeks, hard to walk up stairs"
           value={careNeeded}
           onChange={e => setCareNeeded(e.target.value)}
           disabled={isLoading}
@@ -227,7 +227,7 @@ export default function InsuranceUpload({
       >
         {isLoading      ? "Finding your cost..." :
          !extracted     ? "Upload your insurance card first" :
-         !careNeeded    ? "Enter care needed above" :
+         !careNeeded    ? "Describe your symptoms above" :
          !zipCode       ? "Enter zip code above" :
                           "Find My Cost"}
       </button>

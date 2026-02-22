@@ -48,7 +48,7 @@ export default function HospitalCards({ hospitals }: HospitalCardsProps) {
 
       {/* Top recommendation */}
       <div className="hospital-card hospital-card--top">
-        <div className="card-top-label">Top Recommendation</div>
+        <div className="card-top-label">Closest Provider</div>
         <div className="card-body">
           <div className="card-info">
             <p className="card-name">{top.hospital}</p>
@@ -56,9 +56,15 @@ export default function HospitalCards({ hospitals }: HospitalCardsProps) {
             <NetworkBadge status={top.network_status} />
           </div>
           <div className="card-right">
+            <p className="card-cost-label">Est. Out-of-Pocket</p>
             <p className="card-cost">
-              ${top.estimated_cost?.toLocaleString()}
+              {top.estimated_cost > 0
+                ? "$" + top.estimated_cost.toLocaleString()
+                : "—"}
             </p>
+            {top.cost_breakdown && (
+              <p className="card-cost-breakdown">{top.cost_breakdown}</p>
+            )}
             {top.phone && top.phone !== "N/A" && (
               <a
                 href={"tel:" + top.phone}
@@ -81,9 +87,15 @@ export default function HospitalCards({ hospitals }: HospitalCardsProps) {
               <NetworkBadge status={hospital.network_status} />
             </div>
             <div className="card-right">
+              <p className="card-cost-label">Est. Out-of-Pocket</p>
               <p className="card-cost">
-                ${hospital.estimated_cost?.toLocaleString()}
+                {hospital.estimated_cost > 0
+                  ? "$" + hospital.estimated_cost.toLocaleString()
+                  : "—"}
               </p>
+              {hospital.cost_breakdown && (
+                <p className="card-cost-breakdown">{hospital.cost_breakdown}</p>
+              )}
               {hospital.phone && hospital.phone !== "N/A" && (
                 <a
                   href={`tel:${hospital.phone}`}

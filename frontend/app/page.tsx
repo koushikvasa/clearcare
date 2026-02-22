@@ -16,6 +16,7 @@ export interface Hospital {
   phone:          string
   network_status: string
   estimated_cost: number
+  cost_breakdown: string | null
 }
 
 export interface ScoreIteration {

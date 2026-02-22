@@ -9,13 +9,14 @@
 import { useState, useRef, useCallback } from "react"
 
 interface VoiceInputProps {
-  onResult:     (text: string) => void
-  isLoading:    boolean
-  onSubmit:     () => void
+  onResult:       (text: string) => void
+  isLoading:      boolean
+  onSubmit:       () => void
   insuranceInput: string
-  careNeeded:   string
-  zipCode:      string
-  setZipCode:   (val: string) => void
+  careNeeded:     string
+  setCareNeeded:  (val: string) => void
+  zipCode:        string
+  setZipCode:     (val: string) => void
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -26,6 +27,7 @@ export default function VoiceInput({
   onSubmit,
   insuranceInput,
   careNeeded,
+  setCareNeeded,
   zipCode,
   setZipCode,
 }: VoiceInputProps) {
@@ -167,6 +169,24 @@ export default function VoiceInput({
         <div className="input-error">{error}</div>
       )}
 
+      {/* Symptoms field — shown after transcription so user can confirm/edit */}
+      {(transcription || careNeeded) && (
+        <div className="field-group">
+          <label className="input-label">Symptoms / Care Needed</label>
+          <input
+            type="text"
+            className="input-field"
+            placeholder="e.g. my knee has been hurting for 3 weeks"
+            value={careNeeded}
+            onChange={e => setCareNeeded(e.target.value)}
+            disabled={isLoading}
+          />
+          <p className="field-hint">
+            Edit if needed — we extracted this from what you said.
+          </p>
+        </div>
+      )}
+
       {/* Zip code — still needed in voice mode */}
       <div className="field-group">
         <label className="input-label">Zip Code</label>
@@ -186,9 +206,12 @@ export default function VoiceInput({
         <button
           className="btn-primary"
           onClick={onSubmit}
-          disabled={isLoading || !zipCode.trim()}
+          disabled={isLoading || !zipCode.trim() || !careNeeded.trim()}
         >
-          {isLoading ? "Finding your cost..." : "Find My Cost"}
+          {isLoading        ? "Finding your cost..." :
+           !careNeeded.trim() ? "Describe your symptoms above" :
+           !zipCode.trim()    ? "Enter zip code above" :
+                                "Find My Cost"}
         </button>
       )}
 
