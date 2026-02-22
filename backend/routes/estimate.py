@@ -163,6 +163,7 @@ async def estimate(request: EstimateRequest, background_tasks: BackgroundTasks):
         "greeting":                user_context.get("greeting", ""),
         "symptom_reason":          final_result.get("symptom_reason", ""),
         "urgency":                 final_result.get("urgency", "routine"),
+        "insurance_plan":          (agent_result.get("plan_details") or {}).get("plan_name", request.insurance_input or ""),
     }
 
 

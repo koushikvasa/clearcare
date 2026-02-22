@@ -425,20 +425,24 @@ def node_estimate_cost(state: AgentState) -> dict:
                 "copay":          float(plan_details.get("copay_specialist") or 0),
                 "deductible_met": False,
             })
-            cost      = parse_dollar(result, "Your estimated cost:")
-            breakdown = parse_field(result, "Cost breakdown:")
+            cost           = parse_dollar(result, "Your estimated cost:")
+            breakdown      = parse_field(result, "Cost breakdown:")
+            # Full Medicare benchmark rate before insurance — used for savings calc
+            procedure_cost = parse_dollar(result, "Severity-adjusted cost:")
         except Exception as e:
             print(f"ERROR estimate_cost for {name}: {e}")
-            cost      = 0
-            breakdown = ""
+            cost           = 0
+            breakdown      = ""
+            procedure_cost = 0
 
         cost_results.append({
-            "hospital":       name,
-            "address":        hospital.get("address", ""),
-            "phone":          hospital.get("phone", "N/A"),
-            "network_status": hospital["status"],
-            "estimated_cost": cost,
-            "cost_breakdown": breakdown,
+            "hospital":        name,
+            "address":         hospital.get("address", ""),
+            "phone":           hospital.get("phone", "N/A"),
+            "network_status":  hospital["status"],
+            "estimated_cost":  cost,
+            "cost_breakdown":  breakdown,
+            "procedure_cost":  procedure_cost,
         })
 
     cost_results.sort(key=lambda x: x["estimated_cost"] if x["estimated_cost"] > 0 else 9999)

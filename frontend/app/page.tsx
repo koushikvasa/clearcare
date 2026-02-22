@@ -7,7 +7,7 @@ import ResultsPanel from "./components/ResultsPanel"
 import HospitalMap from "./components/HospitalMap"
 import HospitalCards from "./components/HospitalCards"
 import AIAnalysis from "./components/AIAnalysis"
-import ScoreLoop from "./components/ScoreLoop"
+import InsuranceSavings from "./components/InsuranceSavings"
 import Footer from "./components/Footer"
 
 export interface Hospital {
@@ -17,6 +17,7 @@ export interface Hospital {
   network_status: string
   estimated_cost: number
   cost_breakdown: string | null
+  procedure_cost: number | null
 }
 
 export interface ScoreIteration {
@@ -49,6 +50,7 @@ export interface EstimateResult {
   greeting:                string
   symptom_reason:          string | null
   urgency:                 string | null
+  insurance_plan:          string | null
 }
 
 export type InputMode = "text" | "voice" | "upload"
@@ -272,9 +274,11 @@ export default function Page() {
             />
 
             {result && (
-              <ScoreLoop
-                scoreHistory={result.score_history}
-                finalScore={result.final_score}
+              <InsuranceSavings
+                hospitals={result.hospitals || []}
+                yourCost={result.in_network_cost}
+                planName={result.insurance_plan || "Your Plan"}
+                usedDefaults={result.used_defaults ?? false}
               />
             )}
 
