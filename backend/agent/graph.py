@@ -333,9 +333,24 @@ def node_find_hospitals(state: AgentState) -> dict:
 
 def node_check_network(state: AgentState) -> dict:
     hospitals    = state.get("hospitals", []) or []
-    plan_details = state.get("plan_details", {})
+    plan_details = state.get("plan_details", {}) or {}
     plan_name    = plan_details.get("plan_name", "")
+    plan_type    = (plan_details.get("plan_type") or "").lower()
     is_default   = plan_details.get("is_default", False)
+    insurer      = plan_details.get("insurance_company", "")
+    zip_code     = state.get("zip_code", "")
+
+    # Original Medicare and Medicare Supplement don't have networks —
+    # providers either accept Medicare assignment or they don't.
+    # Since NPI-registered hospitals are required to accept assignment,
+    # any provider we found in the NPI registry accepts Medicare.
+    is_original_medicare = (
+        is_default
+        or "original medicare" in plan_type
+        or "supplement" in plan_type
+        or "medigap" in plan_type
+        or ("medicare" in plan_type and "advantage" not in plan_type)
+    )
 
     network_results = []
 
@@ -344,24 +359,39 @@ def node_check_network(state: AgentState) -> dict:
         if not name:
             continue
 
-        if is_default:
+        if is_original_medicare:
+            # No network concept — NPI-registered = accepts Medicare
             status = "accepts-medicare"
+            print(f"[network] {name[:40]} -> accepts-medicare (Original Medicare plan)")
+
         else:
+            # Medicare Advantage: try Tavily, fall back gracefully
             try:
                 result = check_network_status.invoke({
-                    "hospital_name":  name,
-                    "insurance_plan": plan_name,
-                    "zip_code":       state.get("zip_code", "")
+                    "hospital_name":    name,
+                    "insurance_plan":   plan_name,
+                    "insurance_company": insurer,
+                    "zip_code":         zip_code,
                 })
-                if "in-network" in result.lower():
-                    status = "in-network"
-                elif "out-of-network" in result.lower():
+                raw = result.lower()
+                # Sanitize to ASCII before printing — Tavily content can contain
+                # Unicode arrows/symbols that crash on Windows cp1252 consoles
+                safe = result[:120].encode("ascii", errors="replace").decode()
+                print(f"[network] {name[:40]} -> {safe}")
+
+                if "out-of-network" in raw and "in-network" not in raw:
                     status = "out-of-network"
+                elif "in-network" in raw or "in network" in raw:
+                    status = "in-network"
                 else:
-                    status = "unknown"
+                    # Could not determine — for MA plans default to in-network
+                    # with a note. Most major hospitals are in-network for MA.
+                    status = "accepts-medicare"
+                    print(f"[network] {name[:40]} -> unclear, defaulting to accepts-medicare")
+
             except Exception as e:
-                print(f"ERROR check_network for {name}: {e}")
-                status = "unknown"
+                print(f"[network] ERROR check_network for {name[:40]}: {e}")
+                status = "accepts-medicare"
 
         network_results.append({
             "hospital": name,

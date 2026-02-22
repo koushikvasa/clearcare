@@ -149,50 +149,75 @@ def find_hospitals(zip_code: str, specialty: str = "hospital") -> str:
 # results are messy and nuanced.
 
 @tool
-def check_network_status(hospital_name: str, insurance_plan: str, zip_code: str) -> str:
+def check_network_status(
+    hospital_name:     str,
+    insurance_plan:    str,
+    zip_code:          str,
+    insurance_company: str = "",
+) -> str:
     """
-    Check whether a hospital is in-network or out-of-network for a given insurance plan.
-    Searches the insurer's live provider directory.
-    Input: hospital_name, insurance_plan (full plan name), zip_code
-    Returns: network status (in-network/out-of-network/unknown) with confidence level.
+    Check whether a hospital is in-network for a Medicare Advantage plan.
+    Searches the insurer's provider directory via live web search.
+    Input: hospital_name, insurance_plan, zip_code, insurance_company (optional)
+    Returns: network status string containing 'in-network' or 'out-of-network'.
     """
     try:
-        # Targeted search query for the insurer's provider directory
+        # Use the insurer name for the search when available — more reliable
+        # than the full plan name which may not appear verbatim on directory pages
+        insurer_term = insurance_company if insurance_company else insurance_plan.split()[0]
+
+        # Two targeted queries — run whichever Tavily handles better
         query = (
-            f'"{hospital_name}" "{insurance_plan}" '
-            f'in-network provider directory {zip_code} site:*.com'
+            f"{hospital_name} {insurer_term} Medicare Advantage "
+            f"in-network provider {zip_code}"
         )
 
-        results = tavily.search(query=query, max_results=3)
+        results = tavily.search(query=query, max_results=4, search_depth="advanced")
         text = ""
         if results and results.get("results"):
             text = " ".join([
                 r.get("content", "") for r in results["results"]
             ]).lower()
 
-        # Count how many in-network vs out-of-network signals appear
-        # This is more robust than looking for a single keyword
-        in_signals  = ["in-network", "in network", "participating", "contracted provider"]
-        out_signals = ["out-of-network", "out of network", "non-participating", "not contracted"]
+        # Weight signals: longer phrases are more specific and reliable
+        in_signals = [
+            ("participating provider", 3),
+            ("contracted provider", 3),
+            ("in-network provider", 2),
+            ("in-network", 1),
+            ("in network", 1),
+            ("accepts " + insurer_term.lower(), 2),
+        ]
+        out_signals = [
+            ("not a participating provider", 4),
+            ("not in our network", 4),
+            ("out-of-network provider", 3),
+            ("out-of-network", 2),
+            ("out of network", 2),
+            ("non-participating", 2),
+            ("not contracted", 2),
+        ]
 
-        in_score  = sum(text.count(s) for s in in_signals)
-        out_score = sum(text.count(s) for s in out_signals)
+        in_score  = sum(weight for phrase, weight in in_signals  if phrase in text)
+        out_score = sum(weight for phrase, weight in out_signals if phrase in text)
 
-        # Determine status and confidence
-        if in_score > out_score:
-            status = "in-network"
-            confidence = min(0.95, 0.65 + (in_score * 0.05))
-        elif out_score > in_score:
-            status = "out-of-network"
-            confidence = min(0.95, 0.65 + (out_score * 0.05))
+        # Require out_score to be meaningfully higher to call out-of-network —
+        # ties and marginal differences should not result in "out-of-network"
+        if out_score > in_score + 2:
+            status     = "out-of-network"
+            confidence = min(0.90, 0.60 + out_score * 0.03)
+        elif in_score >= 1:
+            status     = "in-network"
+            confidence = min(0.90, 0.60 + in_score * 0.04)
         else:
-            status = "unknown"
-            confidence = 0.40
+            status     = "unknown"
+            confidence = 0.35
 
         return (
             f"Hospital: {hospital_name}\n"
             f"Plan: {insurance_plan}\n"
             f"Network Status: {status}\n"
+            f"in_score={in_score} out_score={out_score}\n"
             f"Confidence: {round(confidence * 100)}%\n"
             f"Note: Always verify with your insurer before scheduling."
         )
